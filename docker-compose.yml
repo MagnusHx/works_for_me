@@ -1,0 +1,13 @@
+services:
+  data:
+    image: ??
+    volumes:
+      - ./data/audio-emotions:/data/audio-emotions
+      - ~/.kaggle:/root/.kaggle:ro
+    command: >
+      sh -c "
+      pip install kaggle &&
+      kaggle datasets download uldisvalainis/audio-emotions
+        -p /data/audio-emotions
+        --unzip
+      "
