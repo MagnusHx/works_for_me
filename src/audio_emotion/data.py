@@ -3,12 +3,8 @@ import kagglehub
 import typer
 from torch.utils.data import Dataset
 
-<<<<<<< HEAD
 
 class AudioDataset(Dataset):
-=======
-class MyDataset(Dataset):
->>>>>>> f0deec7 (Remove unnecessary blank line in data.py)
     """My custom dataset."""
 
     def __init__(self, data_path: Path) -> None:
