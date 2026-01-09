@@ -1,14 +1,21 @@
 from pathlib import Path
-
+import kagglehub
 import typer
 from torch.utils.data import Dataset
 
 
-class MyDataset(Dataset):
+class AudioDataset(Dataset):
     """My custom dataset."""
 
     def __init__(self, data_path: Path) -> None:
-        self.data_path = data_path
+
+    # Download latest version
+        path = kagglehub.dataset_download("uldisvalainis/audio-emotions")
+
+        print("Path to dataset files:", path)
+        
+        self.data_path = path
+        
 
     def __len__(self) -> int:
         """Return the length of the dataset."""
@@ -21,9 +28,9 @@ class MyDataset(Dataset):
 
 def preprocess(data_path: Path, output_folder: Path) -> None:
     print("Preprocessing data...")
-    dataset = MyDataset(data_path)
+    dataset = AudioDataset(data_path)
     dataset.preprocess(output_folder)
 
 
 if __name__ == "__main__":
-    typer.run(preprocess)
+    typer.run(AudioDataset)
