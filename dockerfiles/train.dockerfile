@@ -1,12 +1,18 @@
-FROM ghcr.io/astral-sh/uv:python3.12-alpine AS base
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm
 
-COPY uv.lock uv.lock
-COPY pyproject.toml pyproject.toml
+ENV PYTHONUNBUFFERED=1
+ENV UV_LINK_MODE=copy
 
-RUN uv sync --frozen --no-install-project
+WORKDIR /app
+
+COPY pyproject.toml uv.lock README.md LICENSE ./
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-install-project
 
 COPY src src/
 
-RUN uv sync --frozen
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen
 
-ENTRYPOINT ["uv", "run", "src/audio_emotion/train.py"]
+CMD ["uv", "run", "src/audio_emotion/train.py"]
