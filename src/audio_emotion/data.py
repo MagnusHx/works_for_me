@@ -25,8 +25,6 @@ class AudioDataset(Dataset):
         return waveform, label
 
     def preprocess(self, output_folder: Path) -> None:
+        output_folder = Path(output_folder)
         output_folder.mkdir(parents=True, exist_ok=True)
         print(f"Preprocessing data from {self.data_path} to {output_folder}")
-        
-        train_ratio: float = 0.8,
-        seed: int = 42,

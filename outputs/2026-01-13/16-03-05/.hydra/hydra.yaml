@@ -140,7 +140,7 @@ hydra:
     - path: ''
       schema: structured
       provider: schema
-    output_dir: /home/magnus/repositories/works_for_me/outputs/2026-01-13/15-40-50
+    output_dir: /home/magnus/repositories/works_for_me/outputs/2026-01-13/16-03-05
     choices:
       hydra/env: default
       hydra/callbacks: null

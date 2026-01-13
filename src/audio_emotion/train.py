@@ -12,9 +12,11 @@ from audio_emotion.data import AudioDataset
 def train(cfg: DictConfig):
     dataset = AudioDataset("data/raw")
     print(len(dataset))
-    print(len(dataset.shape()))
-    waveform, label = dataset[0]
-    model = Model()
+    dataset.preprocess("data/processed")
+    
+    
+    #waveform, label = dataset[0]
+    #model = Model()
     # add rest of your training code here
 
 if __name__ == "__main__":

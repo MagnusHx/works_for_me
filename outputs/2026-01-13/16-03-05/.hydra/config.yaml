@@ -1,31 +1,23 @@
-#config.yaml
 experiment:
   seed: 42
-
 environment:
   cuda: true
-
 audio:
   sample_rate: 16000
-
 splits:
-    train: 0.8
-    val: 0.1
-    test: 0.1
-
+  train: 0.8
+  val: 0.1
+  test: 0.1
 dataloader:
   batch_size: 32
   shuffle: true
-
 model:
   kernel_size: 3
   stride: 1
   padding: 1
   dropout: 0.3
-
 optimizer:
   lr: 0.0003
   weight_decay: 0.01
-
 training:
   epochs: 20
