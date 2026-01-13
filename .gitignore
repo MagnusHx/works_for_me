@@ -1,6 +1,8 @@
 #data files
-
 data/
+
+#Hydra reports
+outputs/
 
 docs/site/
 
