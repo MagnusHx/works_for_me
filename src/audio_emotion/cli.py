@@ -1,7 +1,7 @@
 from pathlib import Path
 import typer
 
-from audio_emotion.dataset import download_audio_emotions
+from audio_emotion.download import download_audio_emotions
 from audio_emotion.data import AudioDataset
 
 app = typer.Typer()

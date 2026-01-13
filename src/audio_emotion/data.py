@@ -2,7 +2,7 @@ from pathlib import Path
 from torch.utils.data import Dataset
 import torchaudio
 
-from audio_emotion.dataset import download_audio_emotions
+from audio_emotion.download import download_audio_emotions
 
 
 class AudioDataset(Dataset):
@@ -27,3 +27,6 @@ class AudioDataset(Dataset):
     def preprocess(self, output_folder: Path) -> None:
         output_folder.mkdir(parents=True, exist_ok=True)
         print(f"Preprocessing data from {self.data_path} to {output_folder}")
+        
+        train_ratio: float = 0.8,
+        seed: int = 42,

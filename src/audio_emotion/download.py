@@ -1,10 +1,10 @@
 from pathlib import Path
 from kaggle.api.kaggle_api_extended import KaggleApi
 
-def download_audio_emotions(output_dir: Path) -> Path:
+def download_audio_emotions(output_dir: Path | str) -> Path:
     dataset = "uldisvalainis/audio-emotions"
 
-    output_dir = output_dir.resolve()
+    output_dir = Path(output_dir).expanduser().resolve()
     if output_dir.exists() and any(output_dir.iterdir()):
         print(f"✓ Dataset already exists at {output_dir}")
         return output_dir
