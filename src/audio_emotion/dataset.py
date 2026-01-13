@@ -1,32 +1,20 @@
-import kagglehub
 from pathlib import Path
-import os
+from kaggle.api.kaggle_api_extended import KaggleApi
 
+def download_audio_emotions(output_dir: Path) -> Path:
+    dataset = "uldisvalainis/audio-emotions"
 
-def download_kaggle_dataset(dataset: str, target_dir: Path) -> Path:
-    """
-    Download Kaggle dataset to a deterministic location.
-    
-    Args:
-        dataset: Kaggle dataset identifier (e.g., 'username/dataset-name')
-        target_dir: Base directory where dataset cache will be stored
-        
-    Returns:
-        Path to the downloaded dataset
-        
-    Note:
-        Requires Kaggle API credentials in ~/.kaggle/kaggle.json or 
-        KAGGLE_USERNAME and KAGGLE_KEY environment variables.
-    """
-    target_dir = Path(target_dir).resolve()
-    target_dir.mkdir(parents=True, exist_ok=True)
-    
-    # Set kagglehub cache directory
-    os.environ['KAGGLEHUB_CACHE_DIR'] = str(target_dir)
+    output_dir = output_dir.resolve()
+    if output_dir.exists() and any(output_dir.iterdir()):
+        print(f"✓ Dataset already exists at {output_dir}")
+        return output_dir
 
-    print(f"Downloading {dataset}...")
-    # Don't use 'path' parameter - let kagglehub manage the structure
-    path = kagglehub.dataset_download(dataset)
+    api = KaggleApi()
+    api.authenticate()
 
-    print(f"✓ Dataset downloaded to: {path}")
-    return Path(path)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    print(f"Downloading {dataset} to {output_dir}...")
+    api.dataset_download_files(dataset, path=str(output_dir), unzip=True)
+
+    return output_dir
