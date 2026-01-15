@@ -1,0 +1,8 @@
+# Build once
+docker compose build
+
+# Download data (only needed once)
+docker compose run audio-emotion-download
+
+# Train model
+docker compose run audio-emotion-train

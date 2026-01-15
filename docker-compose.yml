@@ -1,20 +1,28 @@
 services:
   audio-emotion-download:
-    image: train:latest
+    build:
+      context: .
+      dockerfile: dockerfiles/train.dockerfile
+    image: audio-emotion:latest
 
     volumes:
       - /home/skole/.kaggle/kaggle.json:/root/.kaggle/kaggle.json:ro
       - ./data:/app/data
-      - .:/app
-
-    working_dir: /app
 
     environment:
       KAGGLE_CONFIG_DIR: /root/.kaggle
 
-    command: >
-      bash -c "
-      pip install --no-cache-dir uv &&
-      uv pip install --system --no-cache-dir . &&
-      python -m audio_emotion download --output-dir data/raw/audio-emotions
-      "
+    command: uv run python -m audio_emotion.cli download --output-dir data/raw/audio-emotions
+
+  audio-emotion-train:
+    build:
+      context: .
+      dockerfile: dockerfiles/train.dockerfile
+    image: audio-emotion:latest
+
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./configs:/app/configs
+
+    command: uv run python src/audio_emotion/train.py
