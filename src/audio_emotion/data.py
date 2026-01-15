@@ -4,11 +4,13 @@ import torchaudio
 import librosa 
 import numpy as np
 import wave
+from omegaconf import DictConfig
 
 from audio_emotion.download import download_audio_emotions
 
 class AudioDataset(Dataset):
-    def __init__(self, data_dir: Path) -> None:
+    def __init__(self, cfg: DictConfig, data_dir: Path) -> None:
+        self.cfg = cfg
         self.data_path = download_audio_emotions(data_dir)
         self.audio_files = sorted(self.data_path.rglob("*.wav"))
 

@@ -18,6 +18,13 @@ environment:
 
 audio:
   sample_rate: 16000
+  n_fft: 512
+  hop_length: 160
+  win_length: 400
+  n_mels: 128
+  use_mel: true
+  log_mel: true
+  max_frames: 256
 
 splits:
     train: 0.8
@@ -29,10 +36,18 @@ dataloader:
   shuffle: true
 
 model:
+  architecture: vgg16
+  in_channels: 1
+  out_channels: 64
+  num_classes: 7
   kernel_size: 3
   stride: 1
   padding: 1
   dropout: 0.3
+  max_pool_kernel: 2
+  max_pool_stride: 2
+  channels: [64, 128, 256, 512, 512]
+
 
 optimizer:
   lr: 0.0003
