@@ -11,8 +11,9 @@ import torch
 )
 
 def train(cfg: DictConfig):
-    dataset = AudioDataset("data/raw")
+    dataset = AudioDataset(cfg,"data/raw")
     print(len(dataset))
+    
     dataset.preprocess("data/processed")
 
     # ---- Model fra Hydra cfg ----
