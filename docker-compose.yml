@@ -12,15 +12,19 @@ services:
     environment:
       KAGGLE_CONFIG_DIR: /root/.kaggle
 
-    command: audio-emotion download --output-dir data/raw/audio-emotions
+    command: uv run audio-emotion download --output-dir data/raw/audio-emotions
 
 
   audio-emotion-train:
     image: audio-emotion:latest
 
     volumes:
+      - ~/.kaggle/kaggle.json:/root/.kaggle/kaggle.json:ro
       - ./data:/app/data
       - ./models:/app/models
       - ./configs:/app/configs
+      
+    environment:
+      KAGGLE_CONFIG_DIR: /root/.kaggle
 
-    command: audio-emotion-train
+    command: uv run audio-emotion-train
