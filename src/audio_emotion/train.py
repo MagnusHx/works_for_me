@@ -24,7 +24,8 @@ def train(
         dataset = AudioDataset(cfg, "data/raw")
         print(len(dataset))
 
-        dataset.preprocess("data/processed")
+        dataset.send_to_processed("data/processed")
+
 
         model = Model(cfg)
         typer.echo("Training initialized")
