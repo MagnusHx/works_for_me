@@ -30,7 +30,9 @@ dependencies = [
 ]
 
 [project.scripts]
-audio-emotion = "audio_emotion.train:main"
+audio-emotion = "audio_emotion.cli:main"
+audio-emotion-train = "audio_emotion.train:main"
+
 
 [dependency-groups]
 dev = [
