@@ -1,12 +1,14 @@
 from pathlib import Path
 from torch.utils.data import Dataset
 import torchaudio
+from omegaconf import DictConfig
 
 from audio_emotion.download import download_audio_emotions
 
 
 class AudioDataset(Dataset):
-    def __init__(self, data_dir: Path) -> None:
+    def __init__(self, cfg: DictConfig, data_dir: Path) -> None:
+        self.cfg = cfg
         self.data_path = download_audio_emotions(data_dir)
         self.audio_files = sorted(self.data_path.rglob("*.wav"))
 
@@ -28,3 +30,8 @@ class AudioDataset(Dataset):
         output_folder = Path(output_folder)
         output_folder.mkdir(parents=True, exist_ok=True)
         print(f"Preprocessing data from {self.data_path} to {output_folder}")
+        
+        ...
+        
+        print(f"Preprocessing finished")
+        

@@ -1,13 +1,20 @@
 services:
-  data:
-    image: ??
+  audio-emotion-download:
+    image: train:latest
+
     volumes:
-      - ./data/audio-emotions:/data/audio-emotions
-      - ~/.kaggle:/root/.kaggle:ro
+      - /home/skole/.kaggle/kaggle.json:/root/.kaggle/kaggle.json:ro
+      - ./data:/app/data
+      - .:/app
+
+    working_dir: /app
+
+    environment:
+      KAGGLE_CONFIG_DIR: /root/.kaggle
+
     command: >
-      sh -c "
-      pip install kaggle &&
-      kaggle datasets download uldisvalainis/audio-emotions
-        -p /data/audio-emotions
-        --unzip
+      bash -c "
+      pip install --no-cache-dir uv &&
+      uv pip install --system --no-cache-dir . &&
+      python -m audio_emotion download --output-dir data/raw/audio-emotions
       "
