@@ -6,7 +6,7 @@ services:
       dockerfile: dockerfiles/train.dockerfile
 
     volumes:
-      - /home/skole/.kaggle/kaggle.json:/root/.kaggle/kaggle.json:ro
+      - ~/.kaggle/kaggle.json:/root/.kaggle/kaggle.json:ro
       - ./data:/app/data
 
     environment:
