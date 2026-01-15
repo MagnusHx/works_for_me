@@ -1,7 +1,7 @@
 import typer
 import hydra
 from omegaconf import DictConfig
-
+from pathlib import Path
 from audio_emotion.model import Model
 from audio_emotion.data import AudioDataset
 
@@ -13,9 +13,7 @@ def train(
     config_path: str = "configs",
     config_name: str = "config.yaml",
 ):
-    """
-    Train audio emotion model using Hydra config.
-    """
+    config_path = str(Path(config_path).resolve())
 
     @hydra.main(
         version_base=None,
