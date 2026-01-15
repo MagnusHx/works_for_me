@@ -4,7 +4,7 @@ from audio_emotion.data import AudioDataset
 from omegaconf import OmegaConf
 
 def test_my_dataset():
-    """Test the MyDataset class."""
+    """Test the AudioDataset class."""
     cfg = OmegaConf.load("configs/config.yaml")
     dataset = AudioDataset(cfg,"data/raw")
     assert isinstance(dataset, Dataset)
