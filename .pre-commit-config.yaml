@@ -1,10 +1,39 @@
-# See https://pre-commit.com for more information
-# See https://pre-commit.com/hooks.html for more hooks
+default_language_version:
+  python: python3.12
+
+# Avoid running hooks on big/non-source folders
+exclude: |
+  (?x)^(
+    data/|
+    models/|
+    reports/|
+    notebooks/|
+    \.venv/|
+    \.ruff_cache/|
+    \.mypy_cache/|
+    dist/|
+    build/
+  )
+
 repos:
--   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.2.0
+  # General sanity checks (whitespace, yaml/json/toml validity, merge conflicts, etc.)
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
     hooks:
-    -   id: trailing-whitespace
-    -   id: end-of-file-fixer
-    -   id: check-yaml
-    -   id: check-added-large-files
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: debug-statements
+      - id: check-added-large-files
+        args: ["--maxkb=10240"]  # 10 MB; adjust if you want stricter/looser
+
+  # Ruff = fast linter + formatter
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.13
+    hooks:
+      - id: ruff-check
+        args: ["--fix", "--exit-non-zero-on-fix"]
+      - id: ruff-format

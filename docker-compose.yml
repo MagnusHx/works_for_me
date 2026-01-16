@@ -23,7 +23,7 @@ services:
       - ./data:/app/data
       - ./models:/app/models
       - ./configs:/app/configs
-      
+
     environment:
       KAGGLE_CONFIG_DIR: /root/.kaggle
 

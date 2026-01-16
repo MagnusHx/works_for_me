@@ -1,6 +1,7 @@
 from pathlib import Path
 from kaggle.api.kaggle_api_extended import KaggleApi
 
+
 def download_audio_emotions(output_dir: Path | str) -> Path:
     dataset = "uldisvalainis/audio-emotions"
 

@@ -140,7 +140,7 @@ will check the repositories and the code to verify your answers.
 > Recommended answer length: 0-200 words.
 >
 > Answer:
-> We have used sklearn to process our data from audio files 
+> We have used sklearn to process our data from audio files
 
 
 ## Coding environment

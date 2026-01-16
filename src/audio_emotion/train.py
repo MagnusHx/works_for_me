@@ -122,11 +122,10 @@ def train(
         typer.echo("A) Before send_to_processed")
         t0 = time.perf_counter()
         dataset.send_to_processed(processed_dir)
-        typer.echo(f"B) After send_to_processed ({time.perf_counter()-t0:.1f}s)")
-
+        typer.echo(f"B) After send_to_processed ({time.perf_counter() - t0:.1f}s)")
 
         # Precompute all spectrograms (so training doesn't do slow preprocessing)
-        #dataset.send_to_processed(processed_dir)
+        # dataset.send_to_processed(processed_dir)
 
         # ---------- Device ----------
         use_cuda = bool(cfg.environment.cuda) and torch.cuda.is_available()
@@ -174,14 +173,16 @@ def train(
                 "Train loader has 0 batches. Your train split or batch_size is causing empty training data."
             )
 
-        #xb, yb = next(iter(train_loader))
-        #typer.echo(f"First batch x shape: {tuple(xb.shape)} | y shape: {tuple(yb.shape)}")
+        # xb, yb = next(iter(train_loader))
+        # typer.echo(f"First batch x shape: {tuple(xb.shape)} | y shape: {tuple(yb.shape)}")
 
         # ----- EF TEST ------
         typer.echo("E) Before first batch fetch")
         t1 = time.perf_counter()
         xb, yb = next(iter(train_loader))
-        typer.echo(f"F) After first batch fetch ({time.perf_counter()-t1:.1f}s) | x {tuple(xb.shape)} y {tuple(yb.shape)}")
+        typer.echo(
+            f"F) After first batch fetch ({time.perf_counter() - t1:.1f}s) | x {tuple(xb.shape)} y {tuple(yb.shape)}"
+        )
 
         # ---------- Model ----------
         model = Model(cfg).to(device)
@@ -201,9 +202,7 @@ def train(
 
         for epoch in range(1, epochs + 1):
             typer.echo(f"\n=== Epoch {epoch:02d}/{epochs} ===")
-            train_loss, train_acc = train_one_epoch(
-                model, train_loader, criterion, optimizer, device, log_every=1
-            )
+            train_loss, train_acc = train_one_epoch(model, train_loader, criterion, optimizer, device, log_every=1)
             val_loss, val_acc = evaluate(model, val_loader, criterion, device)
 
             typer.echo(

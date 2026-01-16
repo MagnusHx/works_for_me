@@ -44,10 +44,18 @@ class AudioDataset(Dataset):
         x = torch.from_numpy(np.load(npy_path)).float()  # shape: (1, F, T)
         return x, torch.tensor(y, dtype=torch.long)
 
-    # 
+    #
 
-    def preprocess(self, wav_path: str | Path, clip_seconds: float = 4.0, n_fft: int = 512, hop_length: int = 160, win_length: int | None = 400,
-        center: bool = True, epsilon: float = 1e-8) -> np.ndarray:
+    def preprocess(
+        self,
+        wav_path: str | Path,
+        clip_seconds: float = 4.0,
+        n_fft: int = 512,
+        hop_length: int = 160,
+        win_length: int | None = 400,
+        center: bool = True,
+        epsilon: float = 1e-8,
+    ) -> np.ndarray:
         """Preprocess an audio file into a log-magnitude STFT spectrogram for the CNN."""
         sample_rate = self.cfg.audio.sample_rate
         y, sr = librosa.load(
@@ -82,7 +90,8 @@ class AudioDataset(Dataset):
 
         return log_mag[np.newaxis, :, :].astype(np.float32)
 
-    def send_to_processed(self,
+    def send_to_processed(
+        self,
         output_folder: str | Path = "data/processed",
         overwrite: bool = False,
         verbose: bool = True,
