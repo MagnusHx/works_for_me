@@ -37,7 +37,7 @@ def train_one_epoch(
 
     for step, (x, y) in enumerate(loader, start=1):
         x = x.to(device, non_blocking=True)
-        y = y.to(device, non_blocking=True)  # already long from dataset; safe either way
+        y = y.long().to(device, non_blocking=True)  # already long from dataset; safe either way
 
         optimizer.zero_grad(set_to_none=True)
         logits = model(x)
@@ -73,7 +73,7 @@ def evaluate(model: nn.Module, loader: DataLoader, criterion, device: torch.devi
 
     for x, y in loader:
         x = x.to(device, non_blocking=True)
-        y = y.to(device, non_blocking=True)
+        y = y.long().to(device, non_blocking=True)
 
         logits = model(x)
         loss = criterion(logits, y)
@@ -101,20 +101,6 @@ def train(
         config_name=config_name,
     )
     def _train(cfg: DictConfig):
-        typer.echo("A) Before send_to_processed")
-        t0 = time.perf_counter()
-        dataset.send_to_processed(processed_dir)
-        typer.echo(f"B) After send_to_processed ({time.perf_counter()-t0:.1f}s)")
-
-        typer.echo("C) Before creating loaders")
-        # ... loaders ...
-        typer.echo("D) After creating loaders")
-
-        typer.echo("E) Before first batch fetch")
-        t1 = time.perf_counter()
-        xb, yb = next(iter(train_loader))
-        typer.echo(f"F) After first batch fetch ({time.perf_counter()-t1:.1f}s) | x {tuple(xb.shape)} y {tuple(yb.shape)}")
-
         # ---------- Reproducibility ----------
         set_seed(int(cfg.experiment.seed))
 
@@ -123,13 +109,20 @@ def train(
         dataset = AudioDataset(cfg, "data/raw", processed_dir=processed_dir)
         typer.echo(f"Dataset size: {len(dataset)}")
 
-        # Precompute all spectrograms (so training doesn't do slow preprocessing)
+        # ------- AB TEST -------
+        typer.echo("A) Before send_to_processed")
+        t0 = time.perf_counter()
         dataset.send_to_processed(processed_dir)
+        typer.echo(f"B) After send_to_processed ({time.perf_counter()-t0:.1f}s)")
+
+
+        # Precompute all spectrograms (so training doesn't do slow preprocessing)
+        #dataset.send_to_processed(processed_dir)
 
         # ---------- Device ----------
         use_cuda = bool(cfg.environment.cuda) and torch.cuda.is_available()
         device = torch.device("cuda" if use_cuda else "cpu")
-        typer.echo(f"Using device: {device}")
+        typer.echo(f"Using device: {device} | batch_size: {cfg.dataloader.batch_size}")
 
         # ---------- Split (train/val) ----------
         n_total = len(dataset)
@@ -142,6 +135,9 @@ def train(
         # ---------- Random split ----------
         generator = torch.Generator().manual_seed(int(cfg.experiment.seed))
         train_ds, val_ds, _ = random_split(dataset, [n_train, n_val, n_test], generator=generator)
+
+        # ----- C TEST ------
+        typer.echo("C) Before creating loaders")
 
         # ---------- Dataloaders ----------
         train_loader = DataLoader(
@@ -158,6 +154,8 @@ def train(
             num_workers=0,
             pin_memory=use_cuda,
         )
+        # ------ D TEST -------
+        typer.echo("D) After creating loaders")
 
         typer.echo(f"Train batches: {len(train_loader)} | Val batches: {len(val_loader)}")
 
@@ -167,8 +165,14 @@ def train(
                 "Train loader has 0 batches. Your train split or batch_size is causing empty training data."
             )
 
+        #xb, yb = next(iter(train_loader))
+        #typer.echo(f"First batch x shape: {tuple(xb.shape)} | y shape: {tuple(yb.shape)}")
+
+        # ----- EF TEST ------
+        typer.echo("E) Before first batch fetch")
+        t1 = time.perf_counter()
         xb, yb = next(iter(train_loader))
-        typer.echo(f"First batch x shape: {tuple(xb.shape)} | y shape: {tuple(yb.shape)}")
+        typer.echo(f"F) After first batch fetch ({time.perf_counter()-t1:.1f}s) | x {tuple(xb.shape)} y {tuple(yb.shape)}")
 
         # ---------- Model ----------
         model = Model(cfg).to(device)
