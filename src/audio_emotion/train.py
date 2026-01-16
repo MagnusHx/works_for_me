@@ -1,3 +1,4 @@
+import time
 import typer
 import hydra
 from omegaconf import DictConfig
@@ -11,22 +12,34 @@ from torch.utils.data import DataLoader, random_split
 
 app = typer.Typer()
 
+
 def set_seed(seed: int) -> None:
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
 
-def train_one_epoch(model: nn.Module, loader: DataLoader, criterion, optimizer, device: torch.device):
+
+def train_one_epoch(
+    model: nn.Module,
+    loader: DataLoader,
+    criterion,
+    optimizer,
+    device: torch.device,
+    log_every: int = 50,
+):
     model.train()
     running_loss = 0.0
     correct = 0
     total = 0
 
-    for x, y in loader:
-        x = x.to(device)
-        y = y.long().to(device)
+    n_batches = len(loader)
+    t0 = time.perf_counter()
 
-        optimizer.zero_grad()
+    for step, (x, y) in enumerate(loader, start=1):
+        x = x.to(device, non_blocking=True)
+        y = y.to(device, non_blocking=True)  # already long from dataset; safe either way
+
+        optimizer.zero_grad(set_to_none=True)
         logits = model(x)
         loss = criterion(logits, y)
         loss.backward()
@@ -37,9 +50,19 @@ def train_one_epoch(model: nn.Module, loader: DataLoader, criterion, optimizer, 
         correct += (preds == y).sum().item()
         total += y.size(0)
 
-    avg_loss= running_loss / max(total, 1)
+        if log_every > 0 and (step % log_every == 0 or step == 1 or step == n_batches):
+            elapsed = time.perf_counter() - t0
+            typer.echo(
+                f"  batch {step:>5}/{n_batches} | "
+                f"loss {loss.item():.4f} | "
+                f"seen {total} samples | "
+                f"{elapsed:.1f}s elapsed"
+            )
+
+    avg_loss = running_loss / max(total, 1)
     acc = correct / max(total, 1)
     return avg_loss, acc
+
 
 @torch.no_grad()
 def evaluate(model: nn.Module, loader: DataLoader, criterion, device: torch.device):
@@ -49,8 +72,8 @@ def evaluate(model: nn.Module, loader: DataLoader, criterion, device: torch.devi
     total = 0
 
     for x, y in loader:
-        x = x.to(device)
-        y = y.long().to(device)
+        x = x.to(device, non_blocking=True)
+        y = y.to(device, non_blocking=True)
 
         logits = model(x)
         loss = criterion(logits, y)
@@ -63,6 +86,7 @@ def evaluate(model: nn.Module, loader: DataLoader, criterion, device: torch.devi
     avg_loss = running_loss / max(total, 1)
     acc = correct / max(total, 1)
     return avg_loss, acc
+
 
 @app.command()
 def train(
@@ -81,10 +105,12 @@ def train(
         set_seed(int(cfg.experiment.seed))
 
         # ---------- Dataset ----------
-        dataset = AudioDataset(cfg, "data/raw")
+        processed_dir = "data/processed"
+        dataset = AudioDataset(cfg, "data/raw", processed_dir=processed_dir)
         typer.echo(f"Dataset size: {len(dataset)}")
 
-        dataset.send_to_processed("data/processed")
+        # Precompute all spectrograms (so training doesn't do slow preprocessing)
+        dataset.send_to_processed(processed_dir)
 
         # ---------- Device ----------
         use_cuda = bool(cfg.environment.cuda) and torch.cuda.is_available()
@@ -95,7 +121,9 @@ def train(
         n_total = len(dataset)
         n_train = int(cfg.splits.train * n_total)
         n_val = int(cfg.splits.val * n_total)
-        n_test = n_total - n_train - n_val 
+        n_test = n_total - n_train - n_val
+
+        typer.echo(f"Splits -> train: {n_train}, val: {n_val}, test: {n_test}")
 
         # ---------- Random split ----------
         generator = torch.Generator().manual_seed(int(cfg.experiment.seed))
@@ -106,7 +134,7 @@ def train(
             train_ds,
             batch_size=int(cfg.dataloader.batch_size),
             shuffle=bool(cfg.dataloader.shuffle),
-            num_workers=0,      # sæt evt >0 senere
+            num_workers=0,
             pin_memory=use_cuda,
         )
         val_loader = DataLoader(
@@ -116,6 +144,17 @@ def train(
             num_workers=0,
             pin_memory=use_cuda,
         )
+
+        typer.echo(f"Train batches: {len(train_loader)} | Val batches: {len(val_loader)}")
+
+        # ---------- Smoke test (forces first batch load) ----------
+        if len(train_loader) == 0:
+            raise RuntimeError(
+                "Train loader has 0 batches. Your train split or batch_size is causing empty training data."
+            )
+
+        xb, yb = next(iter(train_loader))
+        typer.echo(f"First batch x shape: {tuple(xb.shape)} | y shape: {tuple(yb.shape)}")
 
         # ---------- Model ----------
         model = Model(cfg).to(device)
@@ -131,8 +170,13 @@ def train(
 
         # ---------- Training loop ----------
         epochs = int(cfg.training.epochs)
+        typer.echo(f"Epochs: {epochs}")
+
         for epoch in range(1, epochs + 1):
-            train_loss, train_acc = train_one_epoch(model, train_loader, criterion, optimizer, device)
+            typer.echo(f"\n=== Epoch {epoch:02d}/{epochs} ===")
+            train_loss, train_acc = train_one_epoch(
+                model, train_loader, criterion, optimizer, device, log_every=50
+            )
             val_loss, val_acc = evaluate(model, val_loader, criterion, device)
 
             typer.echo(
@@ -142,13 +186,11 @@ def train(
             )
 
         # ---------- Save model ----------
-        # Gem i models/ (lav mappen hvis den ikke findes)
         Path("models").mkdir(parents=True, exist_ok=True)
         torch.save(model.state_dict(), "models/vgg16_audio.pt")
         typer.echo("Saved model to models/vgg16_audio.pt")
 
     _train()
-
 
 
 if __name__ == "__main__":

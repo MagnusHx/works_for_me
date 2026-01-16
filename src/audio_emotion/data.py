@@ -1,37 +1,48 @@
 from pathlib import Path
 from torch.utils.data import Dataset
-import torchaudio
-import librosa 
+import librosa
 import numpy as np
-import wave
+import torch
 from omegaconf import DictConfig
 
 from audio_emotion.download import download_audio_emotions
 
-class AudioDataset(Dataset):
-    def __init__(self, cfg: DictConfig, data_dir: Path) -> None:
-        self.cfg = cfg
-        self.data_path = download_audio_emotions(data_dir)
-        self.audio_files = sorted(self.data_path.rglob("*.wav"))
 
+class AudioDataset(Dataset):
+    def __init__(self, cfg: DictConfig, data_dir: str | Path, processed_dir: str | Path = "data/processed") -> None:
+        self.cfg = cfg
+
+        self.data_path = download_audio_emotions(Path(data_dir))
+        self.audio_files = sorted(self.data_path.rglob("*.wav"))
         if not self.audio_files:
-            raise RuntimeError(
-                f"No .wav files found after download in {self.data_path}"
-            )
+            raise RuntimeError(f"No .wav files found after download in {self.data_path}")
+
+        # label -> int mapping (e.g. "happy" -> 0)
+        self.classes = sorted({p.parent.name for p in self.audio_files})
+        self.class2idx = {c: i for i, c in enumerate(self.classes)}
+
+        self.processed_dir = Path(processed_dir)
 
     def __len__(self) -> int:
         return len(self.audio_files)
 
     def __getitem__(self, index: int):
         audio_path = self.audio_files[index]
-        waveform, sample_rate = torchaudio.load(audio_path)
-        label = audio_path.parent.name
-        return waveform, label
+        label_str = audio_path.parent.name
+        y = self.class2idx[label_str]
 
-    def download_raw(self, output_folder: Path) -> None:
-        output_folder = Path(output_folder)
-        output_folder.mkdir(parents=True, exist_ok=True)
-        print(f"Preprocessing data from {self.data_path} to {output_folder}")
+        # Load precomputed spectrogram (.npy)
+        npy_path = self.processed_dir / label_str / f"{audio_path.stem}.npy"
+
+        # If not found, compute it on-the-fly (safer than crashing)
+        if not npy_path.exists():
+            self.processed_dir.mkdir(parents=True, exist_ok=True)
+            (self.processed_dir / label_str).mkdir(parents=True, exist_ok=True)
+            spec = self.preprocess(audio_path)
+            np.save(npy_path, spec)
+
+        x = torch.from_numpy(np.load(npy_path)).float()  # shape: (1, F, T)
+        return x, torch.tensor(y, dtype=torch.long)
 
     def preprocess(
         self,
@@ -44,31 +55,7 @@ class AudioDataset(Dataset):
         center: bool = True,
         epsilon: float = 1e-8,
     ) -> np.ndarray:
-        """Preprocess an audio file into a log-magnitude STFT spectrogram for the CNN.
-
-        Loads an audio file, pads or truncates it to a fixed length, computes the
-        Short-Time Fourier Transform (STFT), and returns a normalized log-magnitude
-        spectrogram.
-
-        Args:
-            wav_path: Path to the audio file (.wav) to preprocess.
-            sample_rate: Target sample rate in Hz for resampling the audio. Defaults to 16000.
-            clip_seconds: Duration in seconds to extract from the audio. Audio shorter than
-                this will be zero-padded; longer audio will be truncated. Defaults to 4.0.
-            n_fft: FFT window size for STFT computation. Determines frequency resolution.
-                Output will have n_fft//2 + 1 frequency bins. Defaults to 512.
-            hop_length: Number of samples between successive STFT frames. Smaller values
-                give higher time resolution but more frames. Defaults to 160.
-            win_length: Window length for each STFT frame. If None, defaults to n_fft.
-                Defaults to 400.
-            center: If True, pads the signal so frames are centered. Defaults to True.
-            epsilon: Small constant added before log to avoid log(0). Defaults to 1e-8.
-
-        Returns:
-            A numpy array of shape (1, F, T) containing the normalized log-magnitude
-            spectrogram, where F = n_fft//2 + 1 is the number of frequency bins and
-            T is the number of time frames.
-        """
+        """Preprocess an audio file into a log-magnitude STFT spectrogram for the CNN."""
         y, sr = librosa.load(
             wav_path,
             sr=sample_rate,
@@ -96,28 +83,40 @@ class AudioDataset(Dataset):
         mag = np.abs(S)
         log_mag = np.log(mag + epsilon)
 
+        # normalize per-example
         log_mag = (log_mag - log_mag.mean()) / (log_mag.std() + 1e-6)
 
         return log_mag[np.newaxis, :, :].astype(np.float32)
 
-    def send_to_processed(self, output_folder: str | Path = "data/processed") -> Path:
-        """Preprocess all audio files and save spectrograms to the processed data folder.
-
-        Iterates through all audio files in the dataset, preprocesses each one into
-        a log-magnitude spectrogram, and saves them as .npy files in the specified
-        output folder, preserving the emotion label subdirectory structure.
-
-        Args:
-            output_folder: Path to the output directory for processed spectrograms.
-                Defaults to "data/processed".
-
-        Returns:
-            Path to the output folder containing processed spectrograms.
-        """
+    def send_to_processed(
+        self,
+        output_folder: str | Path = "data/processed",
+        overwrite: bool = False,
+        verbose: bool = True,
+    ) -> Path:
+        """Preprocess all audio files and save spectrograms, skipping ones already processed."""
         output_folder = Path(output_folder)
         output_folder.mkdir(parents=True, exist_ok=True)
 
+        # IMPORTANT: keep dataset pointing to the folder we write to
+        self.processed_dir = output_folder
+
+        missing: list[Path] = []
         for audio_file in self.audio_files:
+            label = audio_file.parent.name
+            output_path = output_folder / label / f"{audio_file.stem}.npy"
+            if overwrite or not output_path.exists():
+                missing.append(audio_file)
+
+        if not missing:
+            if verbose:
+                print(f"All {len(self.audio_files)} files already processed in {output_folder}. Skipping.")
+            return output_folder
+
+        processed_count = 0
+        skipped_count = len(self.audio_files) - len(missing)
+
+        for audio_file in missing:
             label = audio_file.parent.name
             label_folder = output_folder / label
             label_folder.mkdir(parents=True, exist_ok=True)
@@ -126,6 +125,9 @@ class AudioDataset(Dataset):
 
             output_path = label_folder / f"{audio_file.stem}.npy"
             np.save(output_path, spectrogram)
+            processed_count += 1
 
-        print(f"Processed {len(self.audio_files)} files to {output_folder}")
+        if verbose:
+            print(f"Processed {processed_count} files to {output_folder} (skipped {skipped_count} already-processed).")
+
         return output_folder
