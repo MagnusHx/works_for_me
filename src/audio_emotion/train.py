@@ -25,7 +25,7 @@ def train_one_epoch(
     criterion,
     optimizer,
     device: torch.device,
-    log_every: int = 50,
+    log_every: int = 1,
 ):
     model.train()
     running_loss = 0.0
@@ -193,7 +193,7 @@ def train(
         for epoch in range(1, epochs + 1):
             typer.echo(f"\n=== Epoch {epoch:02d}/{epochs} ===")
             train_loss, train_acc = train_one_epoch(
-                model, train_loader, criterion, optimizer, device, log_every=50
+                model, train_loader, criterion, optimizer, device, log_every=1
             )
             val_loss, val_acc = evaluate(model, val_loader, criterion, device)
 
