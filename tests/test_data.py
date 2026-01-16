@@ -1,5 +1,4 @@
 from torch.utils.data import Dataset
-from tests import _PATH_DATA
 from audio_emotion.data import AudioDataset
 from omegaconf import OmegaConf
 

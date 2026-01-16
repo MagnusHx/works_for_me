@@ -6,6 +6,9 @@ from pathlib import Path
 from audio_emotion.model import Model
 from audio_emotion.data import AudioDataset
 
+import cProfile
+import pstats
+
 import torch
 from torch import nn
 from torch.utils.data import DataLoader, random_split
@@ -50,6 +53,9 @@ def train_one_epoch(
         correct += (preds == y).sum().item()
         total += y.size(0)
 
+        profiler = cProfile.Profile()
+        profiler.enable()
+
         if log_every > 0 and (step % log_every == 0 or step == 1 or step == n_batches):
             elapsed = time.perf_counter() - t0
             typer.echo(
@@ -58,7 +64,10 @@ def train_one_epoch(
                 f"seen {total} samples | "
                 f"{elapsed:.1f}s elapsed"
             )
-
+            profiler.disable()
+            
+            # Save to file
+            profiler.dump_stats('profile.prof')
     avg_loss = running_loss / max(total, 1)
     acc = correct / max(total, 1)
     return avg_loss, acc
