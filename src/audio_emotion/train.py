@@ -101,6 +101,20 @@ def train(
         config_name=config_name,
     )
     def _train(cfg: DictConfig):
+        typer.echo("A) Before send_to_processed")
+        t0 = time.perf_counter()
+        dataset.send_to_processed(processed_dir)
+        typer.echo(f"B) After send_to_processed ({time.perf_counter()-t0:.1f}s)")
+
+        typer.echo("C) Before creating loaders")
+        # ... loaders ...
+        typer.echo("D) After creating loaders")
+
+        typer.echo("E) Before first batch fetch")
+        t1 = time.perf_counter()
+        xb, yb = next(iter(train_loader))
+        typer.echo(f"F) After first batch fetch ({time.perf_counter()-t1:.1f}s) | x {tuple(xb.shape)} y {tuple(yb.shape)}")
+
         # ---------- Reproducibility ----------
         set_seed(int(cfg.experiment.seed))
 
