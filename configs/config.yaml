@@ -34,9 +34,10 @@ splits:
 dataloader:
   batch_size: 32
   shuffle: true
-  num_workers: 4
-  prefetch_factor: 2
-  persistent_workers: true
+  num_workers: 2
+  pin_memory: false
+  prefetch_factor: 1
+  persistent_workers: false
 
 model:
   architecture: vgg16

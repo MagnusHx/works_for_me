@@ -17,6 +17,7 @@ services:
 
   audio-emotion-train:
     image: audio-emotion:latest
+    shm_size: "8gb"
 
     deploy:
       resources:

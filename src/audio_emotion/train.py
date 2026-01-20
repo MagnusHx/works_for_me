@@ -189,7 +189,7 @@ def train(
                 "batch_size": int(dataloader_cfg.batch_size),
                 "shuffle": shuffle,
                 "num_workers": num_workers,
-                "pin_memory": use_cuda,
+                "pin_memory": cfg.dataloader.pin_memory
             }
             if num_workers > 0:
                 loader_kwargs["persistent_workers"] = persistent_workers
