@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+from collections import Counter
 from contextlib import nullcontext
 from pathlib import Path
 from typing import Any
@@ -10,7 +11,7 @@ import torch
 import typer
 from omegaconf import DictConfig
 from torch import amp, nn
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader, WeightedRandomSampler, random_split
 
 from audio_emotion.data import AudioDataset
 from audio_emotion.model import Model
@@ -152,6 +153,12 @@ def train(
         # Precompute all spectrograms (so training doesn't do slow preprocessing)
         # dataset.send_to_processed(processed_dir)
 
+        label_indices = [dataset.class2idx[path.parent.name] for path in dataset.audio_files]
+        counts = Counter(label_indices)
+        weights = torch.tensor([1.0 / counts[i] for i in range(len(dataset.classes))])
+        class_weights = weights / weights.mean()
+        sample_weights = torch.tensor([class_weights[label] for label in label_indices], dtype=torch.float32)
+
         # ---------- Device ----------
         use_cuda = bool(cfg.environment.cuda) and torch.cuda.is_available()
         device = torch.device("cuda" if use_cuda else "cpu")
@@ -184,19 +191,29 @@ def train(
         prefetch_factor = int(getattr(dataloader_cfg, "prefetch_factor", 2))
         persistent_workers = bool(getattr(dataloader_cfg, "persistent_workers", num_workers > 0))
 
-        def build_loader(dataset, shuffle: bool) -> DataLoader:
+        def build_loader(dataset, shuffle: bool, sampler: WeightedRandomSampler | None = None) -> DataLoader:
             loader_kwargs: dict[str, Any] = {
                 "batch_size": int(dataloader_cfg.batch_size),
-                "shuffle": shuffle,
                 "num_workers": num_workers,
-                "pin_memory": cfg.dataloader.pin_memory
+                "pin_memory": cfg.dataloader.pin_memory,
             }
+            if sampler is None:
+                loader_kwargs["shuffle"] = shuffle
+            else:
+                loader_kwargs["sampler"] = sampler
             if num_workers > 0:
                 loader_kwargs["persistent_workers"] = persistent_workers
                 loader_kwargs["prefetch_factor"] = prefetch_factor
             return DataLoader(dataset, **loader_kwargs)
 
-        train_loader = build_loader(train_ds, shuffle=bool(dataloader_cfg.shuffle))
+        train_indices = train_ds.indices if hasattr(train_ds, "indices") else list(range(len(train_ds)))
+        train_sampler = WeightedRandomSampler(
+            weights=sample_weights[train_indices],
+            num_samples=len(train_indices),
+            replacement=True,
+        )
+
+        train_loader = build_loader(train_ds, shuffle=bool(dataloader_cfg.shuffle), sampler=train_sampler)
         val_loader = build_loader(val_ds, shuffle=False)
         # ------ D TEST -------
         typer.echo("D) After creating loaders")
@@ -233,7 +250,8 @@ def train(
         typer.echo("Training initialized")
 
         # ---------- Loss + Optimizer ----------
-        criterion = nn.CrossEntropyLoss()
+        class_weights = class_weights.to(device)
+        criterion = nn.CrossEntropyLoss(weight=class_weights)
         optimizer = torch.optim.AdamW(
             model.parameters(),
             lr=float(cfg.optimizer.lr),
