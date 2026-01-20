@@ -37,5 +37,6 @@ services:
       - ./data:/app/data
       - ./models:/app/models
       - ./configs:/app/configs
+      - ./outputs:/app/outputs
 
     command: uv run audio-emotion-train

@@ -31,16 +31,14 @@ class Model(nn.Module):
             *self._make_block(channels[3], channels[4], 3, kernel_size, stride, padding, max_pool_kernel, max_pool_stride),
         )
 
-        self.adapt = nn.AdaptiveAvgPool2d((7, 7))
+        self.adapt = nn.AdaptiveAvgPool2d((1, 1))
         self.flatten = nn.Flatten(start_dim=1)
+        reduced = max(channels[4] // 2, num_classes)
         self.classifier = nn.Sequential(
-            nn.Linear(channels[4] * 7 * 7, 4096),
+            nn.Linear(channels[4], reduced),
             nn.ReLU(inplace=True),
             nn.Dropout(p=dropout),
-            nn.Linear(4096, 4096),
-            nn.ReLU(inplace=True),
-            nn.Dropout(p=dropout),
-            nn.Linear(4096, num_classes),
+            nn.Linear(reduced, num_classes),
         )
 
     @staticmethod
@@ -65,6 +63,7 @@ class Model(nn.Module):
                     padding=padding,
                 )
             )
+            layers.append(nn.BatchNorm2d(out_channels))
             layers.append(nn.ReLU(inplace=True))
         layers.append(nn.MaxPool2d(pool_kernel, pool_stride))
         return layers
