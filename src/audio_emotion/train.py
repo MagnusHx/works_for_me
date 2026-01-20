@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import time
+import json
 from collections import Counter
 from contextlib import nullcontext
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 import hydra
+import matplotlib.pyplot as plt
 import torch
 import typer
 from omegaconf import DictConfig
@@ -23,6 +26,31 @@ def set_seed(seed: int) -> None:
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
+
+
+def save_learning_curve(history: dict[str, list[float]]) -> Path:
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    output_dir = Path("outputs") / timestamp
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    metrics_path = output_dir / "metrics.json"
+    with metrics_path.open("w", encoding="utf-8") as f:
+        json.dump(history, f, indent=2)
+
+    epochs = range(1, len(history.get("train_acc", [])) + 1)
+    plt.figure(figsize=(8, 4))
+    plt.plot(epochs, history.get("train_acc", []), label="Train Accuracy")
+    plt.plot(epochs, history.get("val_acc", []), label="Validation Accuracy")
+    plt.xlabel("Epoch")
+    plt.ylabel("Accuracy")
+    plt.title("Learning Curve")
+    plt.legend()
+    plt.grid(True, linestyle="--", alpha=0.4)
+    plt.tight_layout()
+    plot_path = output_dir / "learning_curve.png"
+    plt.savefig(plot_path, dpi=150)
+    plt.close()
+    return plot_path
 
 
 def train_one_epoch(
@@ -281,6 +309,13 @@ def train(
         epochs = int(cfg.training.epochs)
         typer.echo(f"Epochs: {epochs}")
 
+        history: dict[str, list[float]] = {
+            "train_loss": [],
+            "train_acc": [],
+            "val_loss": [],
+            "val_acc": [],
+        }
+
         for epoch in range(1, epochs + 1):
             typer.echo(f"\n=== Epoch {epoch:02d}/{epochs} ===")
             train_loss, train_acc = train_one_epoch(
@@ -309,10 +344,18 @@ def train(
                 f"val loss {val_loss:.4f}, acc {val_acc:.3f}"
             )
 
+            history["train_loss"].append(train_loss)
+            history["train_acc"].append(train_acc)
+            history["val_loss"].append(val_loss)
+            history["val_acc"].append(val_acc)
+
         # ---------- Save model ----------
         Path("models").mkdir(parents=True, exist_ok=True)
         torch.save(model.state_dict(), "models/vgg16_audio.pt")
         typer.echo("Saved model to models/vgg16_audio.pt")
+
+        plot_path = save_learning_curve(history)
+        typer.echo(f"Saved learning curve to {plot_path}")
 
     _train()
 
