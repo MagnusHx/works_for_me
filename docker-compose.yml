@@ -18,7 +18,13 @@ services:
   audio-emotion-train:
     image: audio-emotion:latest
 
-    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
 
     environment:
       KAGGLE_CONFIG_DIR: /root/.kaggle
