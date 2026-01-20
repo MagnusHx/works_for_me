@@ -16,7 +16,7 @@ classifiers = [
   "Programming Language :: Python :: 3",
 ]
 readme = "README.md"
-requires-python = ">=3.12,<3.13"
+requires-python = ">=3.10,<3.12"
 
 dependencies = [
     "numpy<2",
@@ -29,7 +29,7 @@ dependencies = [
     "matplotlib>=3.10.8",
     "soundfile>=0.13.1",
 
-    # PyTorch GPU (CUDA 12.1)
+    # PyTorch GPU (CUDA 11.7 – compatible with driver 470 / Tesla V100)
     "torch==2.0.1+cu117",
     "torchaudio==2.0.2+cu117",
 
