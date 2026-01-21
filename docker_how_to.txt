@@ -10,7 +10,12 @@ docker compose --profile cpu run --rm audio-emotion-train-cpu
 
 
 
-#Training GPU
+#Build and train GPU
+
+docker build -f dockerfiles/train.dockerfile \
+  --build-arg UV_GROUPS="--group train --group cu117" \
+  -t audio-emotion:cu117 .
+
 docker compose --profile gpu run --rm audio-emotion-train-gpu
 
 
