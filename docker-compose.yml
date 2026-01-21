@@ -40,3 +40,34 @@ services:
       - ./outputs:/app/outputs
 
     command: uv run audio-emotion-train
+
+  audio-emotion-train-profile:
+    image: audio-emotion:latest
+    shm_size: "8gb"
+
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+    environment:
+      KAGGLE_CONFIG_DIR: /root/.kaggle
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+
+    volumes:
+      - ${HOME}/.kaggle/kaggle.json:/root/.kaggle/kaggle.json:ro
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./configs:/app/configs
+      - ./outputs:/app/outputs
+      - ./profiles:/app/profiles
+
+    command: >
+      python -m cProfile
+      -o /app/profiles/audio_emotion_train.prof
+      -m uv
+      run audio-emotion-train
