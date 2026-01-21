@@ -66,5 +66,5 @@ services:
       - ./outputs:/app/outputs
       - ./profiles:/app/profiles
 
-    command: >
-      uv run python -m cProfile \ -o /app/profiles/audio_emotion_train.prof \audio-emotion-train
+    command: uv run python -m cProfile -o /app/profiles/audio_emotion_train.prof audio-emotion-train
+
