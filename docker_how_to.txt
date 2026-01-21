@@ -1,8 +1,12 @@
-# Build once
-docker compose build
-
 # Download data (only needed once)
-docker compose run audio-emotion-download
+docker compose up --build audio-emotion-download
 
-# Train model
-docker compose run audio-emotion-train
+# Training CPU
+docker compose --profile cpu up --build audio-emotion-train-cpu
+
+
+#Training GPU
+docker compose --profile gpu up --build audio-emotion-train-gpu
+
+#Profiling with GPU
+docker compose --profile gpu --profile profile up --build audio-emotion-train-profile-gpu
