@@ -1,63 +1,64 @@
 services:
   audio-emotion-download:
-    image: audio-emotion:latest
+    image: audio-emotion:cpu
     build:
       context: .
       dockerfile: dockerfiles/train.dockerfile
-
+      args:
+        UV_EXTRAS: "train,cpu"
     volumes:
       - ${HOME}/.kaggle/kaggle.json:/root/.kaggle/kaggle.json:ro
       - ./data:/app/data
-
     environment:
       KAGGLE_CONFIG_DIR: /root/.kaggle
-
     command: uv run audio-emotion download --output-dir data/raw/audio-emotions
 
-
-  audio-emotion-train:
-    image: audio-emotion:latest
+  audio-emotion-train-cpu:
+    image: audio-emotion:cpu
+    build:
+      context: .
+      dockerfile: dockerfiles/train.dockerfile
+      args:
+        UV_EXTRAS: "train,cpu"
     shm_size: "8gb"
-
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-
+    profiles: ["cpu"]
     environment:
       KAGGLE_CONFIG_DIR: /root/.kaggle
-      NVIDIA_VISIBLE_DEVICES: all
-      NVIDIA_DRIVER_CAPABILITIES: compute,utility
-
     volumes:
       - ${HOME}/.kaggle/kaggle.json:/root/.kaggle/kaggle.json:ro
       - ./data:/app/data
       - ./models:/app/models
       - ./configs:/app/configs
       - ./outputs:/app/outputs
-
     command: uv run audio-emotion-train
 
-  audio-emotion-train-profile:
-    image: audio-emotion:latest
+  audio-emotion-train-gpu:
+    image: audio-emotion:cu117
+    build:
+      context: .
+      dockerfile: dockerfiles/train.dockerfile
+      args:
+        UV_EXTRAS: "train,cu117"
     shm_size: "8gb"
-
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-
+    profiles: ["gpu"]
+    gpus: all
     environment:
       KAGGLE_CONFIG_DIR: /root/.kaggle
-      NVIDIA_VISIBLE_DEVICES: all
-      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+    volumes:
+      - ${HOME}/.kaggle/kaggle.json:/root/.kaggle/kaggle.json:ro
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./configs:/app/configs
+      - ./outputs:/app/outputs
+    command: uv run audio-emotion-train
 
+  audio-emotion-train-profile-gpu:
+    image: audio-emotion:cu117
+    shm_size: "8gb"
+    profiles: ["gpu", "profile"]
+    gpus: all
+    environment:
+      KAGGLE_CONFIG_DIR: /root/.kaggle
     volumes:
       - ${HOME}/.kaggle/kaggle.json:/root/.kaggle/kaggle.json:ro
       - ./data:/app/data
@@ -65,9 +66,7 @@ services:
       - ./configs:/app/configs
       - ./outputs:/app/outputs
       - ./profiles:/app/profiles
-
     command: >
-      python -m cProfile
+      uv run python -m cProfile
       -o /app/profiles/audio_emotion_train.prof
-      -m uv
-      run audio-emotion-train
+      -c "import runpy; runpy.run_module('audio_emotion.train', run_name='__main__')"
