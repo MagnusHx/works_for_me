@@ -10,6 +10,9 @@ RUN apt-get update && apt-get install -y curl \
 
 ENV PATH="/root/.local/bin:$PATH"
 
+# 🔑 INSTALL PYTHON 3.11 VIA UV
+RUN uv python install 3.11
+
 WORKDIR /app
 
 COPY pyproject.toml uv.lock README.md LICENSE ./
