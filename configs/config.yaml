@@ -34,6 +34,10 @@ splits:
 dataloader:
   batch_size: 32
   shuffle: true
+  num_workers: 2
+  pin_memory: false
+  prefetch_factor: 1
+  persistent_workers: false
 
 model:
   architecture: vgg16
@@ -55,3 +59,11 @@ optimizer:
 
 training:
   epochs: 20
+  log_every: 1
+  use_amp: true
+  amp_dtype: float16
+  channels_last: true
+  compile: false
+  compile_mode: default
+  cudnn_benchmark: true
+  matmul_precision: medium

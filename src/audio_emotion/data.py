@@ -85,9 +85,6 @@ class AudioDataset(Dataset):
         mag = np.abs(S)
         log_mag = np.log(mag + epsilon)
 
-        # normalize per-example
-        log_mag = (log_mag - log_mag.mean()) / (log_mag.std() + 1e-6)
-
         return log_mag[np.newaxis, :, :].astype(np.float32)
 
     def send_to_processed(
