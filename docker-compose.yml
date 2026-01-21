@@ -67,7 +67,4 @@ services:
       - ./profiles:/app/profiles
 
     command: >
-      python3 -m cProfile
-      -o /app/profiles/audio_emotion_train.prof
-      -m uv
-      run audio-emotion-train
+      uv run python -m cProfile \ -o /app/profiles/audio_emotion_train.prof \audio-emotion-train
