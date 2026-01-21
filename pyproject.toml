@@ -1,3 +1,7 @@
+[build-system]
+requires = ["uv_build>=0.9.22,<0.10.0"]
+build-backend = "uv_build"
+
 [project]
 name = "audio_emotion"
 version = "0.0.1"
@@ -5,7 +9,6 @@ description = "Audio emotion recognition using deep learning"
 readme = "README.md"
 requires-python = ">=3.11,<3.12"
 
-# Base dependencies – always installed
 dependencies = [
   "numpy<2",
   "hydra-core>=1.3.2",
@@ -13,23 +16,18 @@ dependencies = [
   "typer==0.15.1",
 ]
 
-# Optional user-facing extras (NOT used for Docker build variants)
 [project.optional-dependencies]
 api = [
   "fastapi==0.115.6",
   "uvicorn==0.34.0",
 ]
-
 dev = [
   "black>=24.0.0",
   "ruff>=0.4.0",
   "mypy>=1.9.0",
 ]
 
-# Dependency groups – used by uv sync in Docker
 [dependency-groups]
-
-# Training / data / audio stack (torch deliberately excluded)
 train = [
   "kaggle>=1.8.3",
   "kagglehub>=0.4.0",
@@ -37,23 +35,16 @@ train = [
   "soundfile>=0.13.1",
   "matplotlib>=3.10.8",
 ]
-
-# CPU accelerator
 cpu = [
   "torch==2.0.1",
   "torchaudio==2.0.2",
 ]
-
-# CUDA 11.7 accelerator
 cu117 = [
   "torch==2.0.1+cu117",
   "torchaudio==2.0.2+cu117",
 ]
 
-# uv configuration
 [tool.uv]
-
-# Prevent installing multiple accelerators at the same time
 conflicts = [
   [
     { group = "cpu" },
@@ -61,7 +52,6 @@ conflicts = [
   ],
 ]
 
-# PyTorch custom index – only used when cu117 group is selected
 [tool.uv.sources]
 torch = [{ index = "pytorch-cu117", group = "cu117" }]
 torchaudio = [{ index = "pytorch-cu117", group = "cu117" }]
@@ -71,7 +61,6 @@ name = "pytorch-cu117"
 url = "https://download.pytorch.org/whl/cu117"
 explicit = true
 
-# Console scripts (optional but recommended)
 [project.scripts]
-audio-emotion = "audio_emotion.cli:main"
-audio-emotion-train = "audio_emotion.train:main"
+audio-emotion = "audio_emotion.cli:app"
+audio-emotion-train = "audio_emotion.train:app"

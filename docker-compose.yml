@@ -1,9 +1,4 @@
-version: "3.9"
-
 services:
-  # ------------------------------------------------------------
-  # Download (CPU, Kaggle + audio deps)
-  # ------------------------------------------------------------
   audio-emotion-download:
     image: audio-emotion:cpu
     build:
@@ -16,17 +11,8 @@ services:
       - ./data:/app/data
     environment:
       KAGGLE_CONFIG_DIR: /root/.kaggle
-    command:
-      - uv
-      - run
-      - audio-emotion
-      - download
-      - --output-dir
-      - data/raw/audio-emotions
+    command: uv run --frozen audio-emotion download --output-dir data/raw/audio-emotions
 
-  # ------------------------------------------------------------
-  # CPU training
-  # ------------------------------------------------------------
   audio-emotion-train-cpu:
     image: audio-emotion:cpu
     build:
@@ -36,22 +22,16 @@ services:
         UV_GROUPS: "--group train --group cpu"
     profiles: ["cpu"]
     shm_size: "8gb"
+    environment:
+      KAGGLE_CONFIG_DIR: /root/.kaggle
     volumes:
       - ${HOME}/.kaggle/kaggle.json:/root/.kaggle/kaggle.json:ro
       - ./data:/app/data
       - ./models:/app/models
       - ./configs:/app/configs
       - ./outputs:/app/outputs
-    environment:
-      KAGGLE_CONFIG_DIR: /root/.kaggle
-    command:
-      - uv
-      - run
-      - audio-emotion-train
+    command: uv run --frozen audio-emotion-train
 
-  # ------------------------------------------------------------
-  # GPU training (CUDA 11.7)
-  # ------------------------------------------------------------
   audio-emotion-train-gpu:
     image: audio-emotion:cu117
     build:
@@ -62,24 +42,16 @@ services:
     profiles: ["gpu"]
     shm_size: "8gb"
     gpus: all
+    environment:
+      KAGGLE_CONFIG_DIR: /root/.kaggle
     volumes:
       - ${HOME}/.kaggle/kaggle.json:/root/.kaggle/kaggle.json:ro
       - ./data:/app/data
       - ./models:/app/models
       - ./configs:/app/configs
       - ./outputs:/app/outputs
-    environment:
-      KAGGLE_CONFIG_DIR: /root/.kaggle
-      NVIDIA_VISIBLE_DEVICES: all
-      NVIDIA_DRIVER_CAPABILITIES: compute,utility
-    command:
-      - uv
-      - run
-      - audio-emotion-train
+    command: uv run --frozen audio-emotion-train
 
-  # ------------------------------------------------------------
-  # GPU training with profiling (cProfile)
-  # ------------------------------------------------------------
   audio-emotion-train-profile-gpu:
     image: audio-emotion:cu117
     build:
@@ -90,6 +62,8 @@ services:
     profiles: ["gpu", "profile"]
     shm_size: "8gb"
     gpus: all
+    environment:
+      KAGGLE_CONFIG_DIR: /root/.kaggle
     volumes:
       - ${HOME}/.kaggle/kaggle.json:/root/.kaggle/kaggle.json:ro
       - ./data:/app/data
@@ -97,17 +71,7 @@ services:
       - ./configs:/app/configs
       - ./outputs:/app/outputs
       - ./profiles:/app/profiles
-    environment:
-      KAGGLE_CONFIG_DIR: /root/.kaggle
-      NVIDIA_VISIBLE_DEVICES: all
-      NVIDIA_DRIVER_CAPABILITIES: compute,utility
-    command:
-      - uv
-      - run
-      - python
-      - -m
-      - cProfile
-      - -o
-      - /app/profiles/audio_emotion_train.prof
-      - -m
-      - audio_emotion.train
+    command: >
+      uv run --frozen python -m cProfile
+      -o /app/profiles/audio_emotion_train.prof
+      -c "from audio_emotion.train import app; app()"
