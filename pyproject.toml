@@ -5,7 +5,7 @@ description = "Audio emotion recognition using deep learning"
 readme = "README.md"
 requires-python = ">=3.11,<3.12"
 
-# Base deps: things you truly need in *all* installs
+# Base dependencies – always installed
 dependencies = [
   "numpy<2",
   "hydra-core>=1.3.2",
@@ -13,14 +13,23 @@ dependencies = [
   "typer==0.15.1",
 ]
 
+# Optional user-facing extras (NOT used for Docker build variants)
 [project.optional-dependencies]
-# Run the FastAPI service
 api = [
   "fastapi==0.115.6",
   "uvicorn==0.34.0",
 ]
 
-# Typical training/data/audio stack (no torch here on purpose)
+dev = [
+  "black>=24.0.0",
+  "ruff>=0.4.0",
+  "mypy>=1.9.0",
+]
+
+# Dependency groups – used by uv sync in Docker
+[dependency-groups]
+
+# Training / data / audio stack (torch deliberately excluded)
 train = [
   "kaggle>=1.8.3",
   "kagglehub>=0.4.0",
@@ -29,32 +38,40 @@ train = [
   "matplotlib>=3.10.8",
 ]
 
-# Choose ONE accelerator extra:
+# CPU accelerator
 cpu = [
   "torch==2.0.1",
   "torchaudio==2.0.2",
 ]
 
+# CUDA 11.7 accelerator
 cu117 = [
   "torch==2.0.1+cu117",
   "torchaudio==2.0.2+cu117",
 ]
 
+# uv configuration
 [tool.uv]
-# Prevent installing both cpu and cu117 at the same time
+
+# Prevent installing multiple accelerators at the same time
 conflicts = [
   [
-    { extra = "cpu" },
-    { extra = "cu117" },
+    { group = "cpu" },
+    { group = "cu117" },
   ],
 ]
 
+# PyTorch custom index – only used when cu117 group is selected
 [tool.uv.sources]
-# Only pin to the CUDA index when the user explicitly selects --extra cu117
-torch = [{ index = "pytorch-cu117", extra = "cu117" }]
-torchaudio = [{ index = "pytorch-cu117", extra = "cu117" }]
+torch = [{ index = "pytorch-cu117", group = "cu117" }]
+torchaudio = [{ index = "pytorch-cu117", group = "cu117" }]
 
 [[tool.uv.index]]
 name = "pytorch-cu117"
 url = "https://download.pytorch.org/whl/cu117"
 explicit = true
+
+# Console scripts (optional but recommended)
+[project.scripts]
+audio-emotion = "audio_emotion.cli:main"
+audio-emotion-train = "audio_emotion.train:main"
