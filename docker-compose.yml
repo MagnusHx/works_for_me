@@ -1,63 +1,69 @@
 services:
   audio-emotion-download:
-    image: audio-emotion:latest
+    image: audio-emotion:cpu
     build:
       context: .
       dockerfile: dockerfiles/train.dockerfile
-
+      args:
+        UV_GROUPS: "--group train --group cpu"
     volumes:
       - ${HOME}/.kaggle/kaggle.json:/root/.kaggle/kaggle.json:ro
       - ./data:/app/data
-
     environment:
       KAGGLE_CONFIG_DIR: /root/.kaggle
+    command: uv run --frozen audio-emotion download --output-dir data/raw/audio-emotions
 
-    command: uv run audio-emotion download --output-dir data/raw/audio-emotions
-
-
-  audio-emotion-train:
-    image: audio-emotion:latest
+  audio-emotion-train-cpu:
+    image: audio-emotion:cpu
+    build:
+      context: .
+      dockerfile: dockerfiles/train.dockerfile
+      args:
+        UV_GROUPS: "--group train --group cpu"
+    profiles: ["cpu"]
     shm_size: "8gb"
-
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-
     environment:
       KAGGLE_CONFIG_DIR: /root/.kaggle
-      NVIDIA_VISIBLE_DEVICES: all
-      NVIDIA_DRIVER_CAPABILITIES: compute,utility
-
     volumes:
       - ${HOME}/.kaggle/kaggle.json:/root/.kaggle/kaggle.json:ro
       - ./data:/app/data
       - ./models:/app/models
       - ./configs:/app/configs
       - ./outputs:/app/outputs
+    command: uv run --frozen audio-emotion-train
 
-    command: uv run audio-emotion-train
-
-  audio-emotion-train-profile:
-    image: audio-emotion:latest
+  audio-emotion-train-gpu:
+    image: audio-emotion:cu117
+    build:
+      context: .
+      dockerfile: dockerfiles/train.dockerfile
+      args:
+        UV_GROUPS: "--group train --group cu117"
+    profiles: ["gpu"]
     shm_size: "8gb"
-
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-
+    gpus: all
     environment:
       KAGGLE_CONFIG_DIR: /root/.kaggle
-      NVIDIA_VISIBLE_DEVICES: all
-      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+    volumes:
+      - ${HOME}/.kaggle/kaggle.json:/root/.kaggle/kaggle.json:ro
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./configs:/app/configs
+      - ./outputs:/app/outputs
+    command: uv run --frozen audio-emotion-train
 
+  audio-emotion-train-profile-gpu:
+    image: audio-emotion:cu117
+    build:
+      context: .
+      dockerfile: dockerfiles/train.dockerfile
+      args:
+        UV_GROUPS: "--group train --group cu117"
+    profiles: ["gpu", "profile"]
+    shm_size: "8gb"
+    gpus: all
+    environment:
+      KAGGLE_CONFIG_DIR: /root/.kaggle
     volumes:
       - ${HOME}/.kaggle/kaggle.json:/root/.kaggle/kaggle.json:ro
       - ./data:/app/data
@@ -67,5 +73,3 @@ services:
       - ./profiles:/app/profiles
 
     command: uv run python -m cProfile -o /app/profiles/audio_emotion_train.prof -m audio_emotion.train
-
-

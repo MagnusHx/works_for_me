@@ -1,28 +1,34 @@
-FROM nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04
+FROM python:3.11-slim-bookworm
 
-ENV PYTHONUNBUFFERED=1
-ENV UV_LINK_MODE=copy
+ENV PYTHONUNBUFFERED=1 \
+    UV_LINK_MODE=copy \
+    PATH="/app/.venv/bin:/root/.local/bin:$PATH"
 
-# Install uv
-RUN apt-get update && apt-get install -y curl \
- && curl -LsSf https://astral.sh/uv/install.sh | sh \
- && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      curl ca-certificates libsndfile1 ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
 
-ENV PATH="/root/.local/bin:$PATH"
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # 🔑 INSTALL PYTHON 3.11 VIA UV
 RUN uv python install 3.11
 
 WORKDIR /app
 
+# Example:
+#   --group train --group cpu
+#   --group train --group cu117
+ARG UV_GROUPS="--group train --group cpu"
+
 COPY pyproject.toml uv.lock README.md LICENSE ./
 
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-install-project
+    uv sync --frozen --no-install-project ${UV_GROUPS}
 
-COPY src src/
+COPY src/ src/
 
+# IMPORTANT: keep the same groups here too
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen
+    uv sync --frozen ${UV_GROUPS}
 
-CMD ["uv", "run", "src/audio_emotion/train.py"]
+CMD ["uv", "run", "--frozen", "audio-emotion-train"]
