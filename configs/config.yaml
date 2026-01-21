@@ -58,7 +58,7 @@ optimizer:
   weight_decay: 0.01
 
 training:
-  epochs: 20
+  epochs: 50
   log_every: 1
   use_amp: true
   amp_dtype: float16
