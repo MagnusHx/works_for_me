@@ -159,7 +159,7 @@ will check the repositories and the code to verify your answers.
 > *We used ... for managing our dependencies. The list of dependencies was auto-generated using ... . To get a*
 > *complete copy of our development environment, one would have to run the following commands*
 >
-> Answer:
+> Answer: We used the cookiecutter MLOPs template. This generated the pyproject.toml file. In this file we wrote all the dependencies, which serves like a single source truth for the runtime and development requirements. To get a complete copy of our environment, you should go to our github repository, copy the url, then in the terminal you can either clone or fork our repository. While we worked together on the project, we cloned the repo by using the git clone *url*.git and then u sync to get the packages needed to run our model. 
 
 --- question 4 fill here ---
 
@@ -175,7 +175,7 @@ will check the repositories and the code to verify your answers.
 > *because we did not use any ... in our project. We have added an ... folder that contains ... for running our*
 > *experiments.*
 >
-> Answer:
+> Answer: We initialized our project by using the cookiecutter template, which layed the foundation for the structure of our repo. We did run into some issues, like the data/raw and data/preprocessed was not generated using the template. The template was mostly empty, or filled with another template. For example, the .py files in the src folder had a template for the code, so we used the template and filled in the rest of the code. I am not entirely sure on which exact files and folders were manually created by us, we simply used the cookiecutter template and started doing the project from there on out.  
 
 --- question 5 fill here ---
 
@@ -190,7 +190,9 @@ will check the repositories and the code to verify your answers.
 > *We used ... for linting and ... for formatting. We also used ... for typing and ... for documentation. These*
 > *concepts are important in larger projects because ... . For example, typing ...*
 >
-> Answer:
+> Answer: We implemented some rules and tools to ensure code quality and consistency throughout our project. For linting and formatting, we used the Ruff tool, which detects potential issues and anomalies. Ruff was integrated into our workflow and pre-commit checks, ensuring that the code we commited met the standard we set before being merged into the main branch. 
+We tried to maintan an understandable code by using clear function names and structure. We also had #notes to help understanding in some areas. 
+These concepts matter in larger projects because it sets the foundation for how the project should be worked on. This eliminates potential issues, conflicts and confusion, which ensures project reliability among the team. Without any structure, things could fall apart quickly, and a lot of time would be wasted on debugging.  
 
 --- question 6 fill here ---
 
@@ -209,7 +211,7 @@ will check the repositories and the code to verify your answers.
 > *In total we have implemented X tests. Primarily we are testing ... and ... as these the most critical parts of our*
 > *application but also ... .*
 >
-> Answer:
+> Answer: We have used tests, which can be found in the tests directory. We have 3 sets of tests, one for api, data and model. The test_data verifies that the AudioDataset class intializes correctly, that it imports from PyTorch's Dataset class, and that it loads the expected number of audio samples from the raw data folder. The test_model checks that the model is correctly initialized using the config.yaml file. These tests help catch errors early in our development process. We considered adding tests for the test_api, but as of now we have not finished it yet. 
 
 --- question 7 fill here ---
 
@@ -224,13 +226,13 @@ will check the repositories and the code to verify your answers.
 > *The total code coverage of code is X%, which includes all our source code. We are far from 100% coverage of our **
 > *code and even if we were then...*
 >
-> Answer:
+> Answer: 
 
 --- question 8 fill here ---
 
 ### Question 9
 
-> **Did you workflow include using branches and pull requests? If yes, explain how. If not, explain how branches and**
+> **Did your workflow include using branches and pull requests? If yes, explain how. If not, explain how branches and**
 > **pull request can help improve version control.**
 >
 > Recommended answer length: 100-200 words.
@@ -239,7 +241,7 @@ will check the repositories and the code to verify your answers.
 > *We made use of both branches and PRs in our project. In our group, each member had an branch that they worked on in*
 > *addition to the main branch. To merge code we ...*
 >
-> Answer:
+> Answer: Yes, our workflow did include the use of branches and pull requests. We all git cloned the git repo. Each member then created a feature branch. We would work individually on our branch, and then push our work to the remote git repo. In the git repo we would then merge the commits from our branch to main via the pull requests. We had tests that would run before the final merge to ensure code quality (ruff) - As mentioned before. In addition to this, we would always git pull on our local main, git switch to our branch and then git rebase main branch. Only after this we would git add, commit and push. We did this to ensure we had the latest version of main before making changes, so we would have less conflicts. 
 
 --- question 9 fill here ---
 
@@ -290,7 +292,7 @@ will check the repositories and the code to verify your answers.
 > Example:
 > *We used a simple argparser, that worked in the following way: Python  my_script.py --lr 1e-3 --batch_size 25*
 >
-> Answer:
+> Answer: We configured our experiements using a config.yaml file, which contains all of our hyperparameters and settings, such as the model architecture, learning rate, no. of epochs etc. This means no values are hardcoded in the code itself. Instead, the config.yaml values are accessed through the cfg, for example stride = int(cfg.model.stride). This makes the setup easy to run and repoducible. Since we used a secure shell in the cloud, we would run an experiement with the command: docker compose run audio-emotion-train. If changes were made to the config.yaml, we would have to push the changes and pull them down on the GCP SSH, and then run the experiment again. 
 
 --- question 12 fill here ---
 
@@ -305,7 +307,7 @@ will check the repositories and the code to verify your answers.
 > *We made use of config files. Whenever an experiment is run the following happens: ... . To reproduce an experiment*
 > *one would have to do ...*
 >
-> Answer:
+> Answer: Reproducibility was important for our project. We ensured this by using the config.yaml file that contains all our hyperparameters and settings. This means no important information is lost between experimental runs, since all settings are stored in a safe version controlled file. In addition, we fixed a random seed defined in the config.yaml file. This help ensure that randomness, such as data shuffling and model initialization behave consistently through runs. To reproduce an experiment, one would clone the repo, uv sync the dependencies and run the training script using the same config.yaml file. As long as the config, code version and env. is the same, the experiment can be reproduced without the loss of information.
 
 --- question 13 fill here ---
 
@@ -322,7 +324,7 @@ will check the repositories and the code to verify your answers.
 > *As seen in the first image when have tracked ... and ... which both inform us about ... in our experiments.*
 > *As seen in the second image we are also tracking ... and ...*
 >
-> Answer:
+> Answer: 
 
 --- question 14 fill here ---
 
@@ -337,7 +339,8 @@ will check the repositories and the code to verify your answers.
 > *For our project we developed several images: one for training, inference and deployment. For example to run the*
 > *training docker image: `docker run trainer:latest lr=1e-3 batch_size=64`. Link to docker file: <weblink>*
 >
-> Answer:
+> Answer: We used Docker to containerize our project in order to make experiments and training more reproducible and easier to run across different computers. Docker was used when running the project through GCP, where we built and executed containers directly from the SSH terminal. We would build images using the docker compose build command and we would train our model using the docker compose run audio-emotion-train command.
+
 
 --- question 15 fill here ---
 
@@ -352,7 +355,7 @@ will check the repositories and the code to verify your answers.
 > *Debugging method was dependent on group member. Some just used ... and others used ... . We did a single profiling*
 > *run of our main code at some point that showed ...*
 >
-> Answer:
+> Answer: 
 
 --- question 16 fill here ---
 
@@ -369,7 +372,8 @@ will check the repositories and the code to verify your answers.
 > Example:
 > *We used the following two services: Engine and Bucket. Engine is used for... and Bucket is used for...*
 >
-> Answer:
+> Answer: In our project we used several services from GCP to support our training end experimentation. Initially we created a GCP project. Within this project we enabled Compute Engine which we used to create a virtual machine instance. These instances were used to run our code remotely, including model training. 
+We requested access to a GPU through Compute Engine. We tried with 2 and 1 GPU's, but were only accepted with 1. We also created a Cloud Storage Bucket, which we will be using to store data and files outside the virtual machine. Last but not least we accessed the virtual mahcine using the secure shell, which allowed us to work in the GCP environment through the GCP terminal. 
 
 --- question 17 fill here ---
 
@@ -384,7 +388,8 @@ will check the repositories and the code to verify your answers.
 > *We used the compute engine to run our ... . We used instances with the following hardware: ... and we started the*
 > *using a custom container: ...*
 >
-> Answer:
+> Answer: We had to enable the compute engine in order to request access to a GPU and create and instance with the GPU. We used the instance with the following hardware: Machine type: n1-standard-8 (8 vCPUs, 30 GB Memory), GPU: 
+1 x NVIDIA V100, Boot disk: 250GB. 
 
 --- question 18 fill here ---
 
@@ -402,7 +407,7 @@ will check the repositories and the code to verify your answers.
 > **Upload 1-2 images of your GCP artifact registry, such that we can see the different docker images that you have**
 > **stored. You can take inspiration from [this figure](figures/registry.png).**
 >
-> Answer:
+> Answer: 
 
 --- question 20 fill here ---
 
@@ -411,7 +416,7 @@ will check the repositories and the code to verify your answers.
 > **Upload 1-2 images of your GCP cloud build history, so we can see the history of the images that have been build in**
 > **your project. You can take inspiration from [this figure](figures/build.png).**
 >
-> Answer:
+> Answer: 
 
 --- question 21 fill here ---
 
@@ -426,7 +431,8 @@ will check the repositories and the code to verify your answers.
 > *We managed to train our model in the cloud using the Engine. We did this by ... . The reason we choose the Engine*
 > *was because ...*
 >
-> Answer:
+> Answer: Yes, we managed to train our model in the cloud using GCP Compute Engine, rahter than Vertex AI. We chose Copmute Engine because it gave us more control over the environment, and because it was easier to integrate with our docker based workflow. 
+We created an instance with GPU support enabled and accessed it using the SSH. From here, we cloned the git repo in the SSH and built our docker images directly on the virtual machine. Training was run inside a docker container ensuring the same dependencies and configs were sued as in our local setup. 
 
 --- question 22 fill here ---
 
@@ -443,7 +449,7 @@ will check the repositories and the code to verify your answers.
 > *We did manage to write an API for our model. We used FastAPI to do this. We did this by ... . We also added ...*
 > *to the API to make it more ...*
 >
-> Answer:
+> Answer: 
 
 --- question 23 fill here ---
 
@@ -459,7 +465,7 @@ will check the repositories and the code to verify your answers.
 > *worked. Afterwards we deployed it in the cloud, using ... . To invoke the service an user would call*
 > *`curl -X POST -F "file=@file.json"<weburl>`*
 >
-> Answer:
+> Answer: 
 
 --- question 24 fill here ---
 
@@ -508,7 +514,8 @@ will check the repositories and the code to verify your answers.
 > *Group member 1 used ..., Group member 2 used ..., in total ... credits was spend during development. The service*
 > *costing the most was ... due to ... . Working in the cloud was ...*
 >
-> Answer:
+> Answer: During the project we used a shared GCP setup. One of our group memebers shared access to his instance to the rest of the group. As of now, we have used approximately 500kr. (Jan 22) This was covered by the intitial free trial credits provided by Google Cloud. 
+The most expensive service was the Compute Engine when we used the GPU VM instance for training. We also forgot to off the instance 2 nights in a row, so we don't know how much credit we lost to our forgetfulness. 
 
 --- question 27 fill here ---
 
@@ -555,7 +562,12 @@ will check the repositories and the code to verify your answers.
 > Example:
 > *The biggest challenges in the project was using ... tool to do ... . The reason for this was ...*
 >
-> Answer:
+> Answer: The overall project involved several challenges for us, most of which were related to the learning curve rather than the machine learning model itself. As third semester students in AI and Data, we have mainly been working with jupiter notebook, which is baby friendly. But this course required us to challenge ourselves into a more professional workflow, introducing terminal coding, GitHub collaboration, and Docker and GCP services. Learning how to work effectively with tools such as GitHub, Docker and GCP was both timeconsuming and challenging. 
+A big amount of time was spent debugging issues and understanding the course material. We initially also struggled with understanding how all components fit together.
+To overcome these challenges, we worked hard together within the group, and tried our best to make sure everybody understood what was going on. No man left behind! We tried to break things into smaller parts to get a better understanding, and taking things one step at a time. 
+We did also struggle with a bit of outdated course material - Mainly, the cloud setup took some time because the screenshots provided in the modules were outdated according to how the current GCP website is.
+
+Although we had some challenges, it has been extremely rewarding for all of us. The skills and knowledge we have gathered will for sure help us tremedously in the future of our study and work afterwards. Our challenges have been great for learning, and we all really appreciate this course.
 
 --- question 30 fill here ---
 
@@ -573,6 +585,6 @@ will check the repositories and the code to verify your answers.
 > *Student sXXXXXX was in charge of training our models in the cloud and deploying them afterwards.*
 > *All members contributed to code by...*
 > *We have used ChatGPT to help debug our code. Additionally, we used GitHub Copilot to help write some of our code.*
-> Answer:
+> Answer: 
 
 --- question 31 fill here ---
