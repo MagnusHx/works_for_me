@@ -32,6 +32,9 @@ jobs:
           uv sync
           uv run pip list
 
+      - name: Install coverage
+        run: |
+          uv run pip install coverage
 
       - name: Run tests & coverage
         run: |
