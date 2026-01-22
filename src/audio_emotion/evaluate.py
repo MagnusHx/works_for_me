@@ -27,7 +27,9 @@ def evaluate_model(
 	device: torch.device,
 	channels_last: bool = False,
 	show_progress: bool = True,
-) -> tuple[float, float]:
+	num_classes: int = 0,
+	class_names: list[str] | None = None,
+) -> tuple[float, float, dict[str, float]]:
 	"""Compute average loss and accuracy for a dataloader."""
 
 	model.eval()
@@ -36,6 +38,12 @@ def evaluate_model(
 	total = 0
 	correct = 0
 	total_batches = len(loader)
+
+	class_names = class_names or []
+	if num_classes <= 0:
+		num_classes = len(class_names)
+	class_correct = torch.zeros(num_classes, dtype=torch.long)
+	class_total = torch.zeros(num_classes, dtype=torch.long)
 
 	if show_progress and total_batches > 0:
 		typer.echo(f"Evaluating {total_batches} batches...", nl=True)
@@ -54,6 +62,12 @@ def evaluate_model(
 		correct += (preds == batch_y).sum().item()
 		total += batch_y.size(0)
 
+		if num_classes > 0:
+			for class_idx in range(num_classes):
+				mask = batch_y == class_idx
+				class_total[class_idx] += mask.sum().item()
+				class_correct[class_idx] += (preds[mask] == batch_y[mask]).sum().item()
+
 		if show_progress and total_batches > 0:
 			progress = min(batch_idx / total_batches, 1.0)
 			bar_width = 24
@@ -65,9 +79,16 @@ def evaluate_model(
 		typer.echo("", nl=True)
 
 	if total == 0:
-		return 0.0, 0.0
+		return 0.0, 0.0, {}
 
-	return total_loss / total, correct / total
+	per_class: dict[str, float] = {}
+	if num_classes > 0:
+		for class_idx in range(num_classes):
+			name = class_names[class_idx] if class_idx < len(class_names) else str(class_idx)
+			denom = int(class_total[class_idx].item())
+			per_class[name] = float(class_correct[class_idx].item() / denom) if denom > 0 else 0.0
+
+	return total_loss / total, correct / total, per_class
 
 
 def build_loader(dataset, cfg: DictConfig) -> DataLoader:
@@ -94,6 +115,8 @@ def main(
 	model_path: Path = Path("models/vgg16_audio.pt"),
 	config_path: str = "configs",
 	config_name: str = "config.yaml",
+	split: str = "test",
+	show_per_class: bool = False,
 ):
 	"""Evaluate a trained model checkpoint on the held-out test split."""
 
@@ -122,9 +145,13 @@ def main(
 	if n_test <= 0:
 		raise RuntimeError("Test split size must be positive. Adjust split ratios in the config.")
 
+	if split not in {"train", "val", "test"}:
+		raise ValueError("split must be one of: train, val, test")
+
 	generator = torch.Generator().manual_seed(int(cfg.experiment.seed))
-	_, _, test_ds = random_split(dataset, [n_train, n_val, n_test], generator=generator)
-	test_loader = build_loader(test_ds, cfg)
+	train_ds, val_ds, test_ds = random_split(dataset, [n_train, n_val, n_test], generator=generator)
+	selected_ds = {"train": train_ds, "val": val_ds, "test": test_ds}[split]
+	loader = build_loader(selected_ds, cfg)
 
 	if not model_path.exists():
 		raise FileNotFoundError(f"Model checkpoint not found at {model_path}")
@@ -136,10 +163,21 @@ def main(
 	if channels_last:
 		model = model.to(memory_format=torch.channels_last)
 
-	loss, acc = evaluate_model(model, test_loader, device, channels_last=channels_last, show_progress=True)
-	typer.echo(
-		f"Evaluation complete | device: {device} | samples: {len(test_ds)} | loss: {loss:.4f} | acc: {acc:.3f}"
+	loss, acc, per_class = evaluate_model(
+		model,
+		loader,
+		device,
+		channels_last=channels_last,
+		show_progress=True,
+		num_classes=len(dataset.classes),
+		class_names=list(dataset.classes),
 	)
+	typer.echo(
+		f"Evaluation complete | split: {split} | device: {device} | samples: {len(selected_ds)} | loss: {loss:.4f} | acc: {acc:.3f}"
+	)
+	if show_per_class and per_class:
+		for name, value in per_class.items():
+			typer.echo(f"class {name}: acc {value:.3f}")
 
 
 if __name__ == "__main__":
