@@ -1,6 +1,7 @@
-bentoml==1.4.33
 torch
 numpy
 pydantic
 librosa
 soundfile
+omegaconf
+hydra-core
