@@ -1,0 +1,30 @@
+service: "service:Service"
+
+include:
+  - "service.py"
+  - "src/audio_emotion/**"
+  - "configs/**"
+  - "models/**"
+  - "requirements.txt"
+  - "pyproject.toml"
+
+exclude:
+  - ".venv/**"
+  - "data/**"
+  - "notebooks/**"
+  - "outputs/**"
+  - "reports/**"
+  - "**/__pycache__/**"
+  - "**/*.pyc"
+
+python:
+  requirements_txt: "./requirements.txt"
+  lock_packages: false
+
+
+docker:
+  distro: debian
+  python_version: "3.11"
+  system_packages:
+    - ffmpeg
+    - libsndfile1
