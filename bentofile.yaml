@@ -2,25 +2,11 @@ service: "service:Service"
 
 include:
   - "service.py"
-  - "src/audio_emotion/**"
-  - "configs/**"
+  - "audio_emotion/**"
   - "models/**"
-  - "requirements.txt"
-  - "pyproject.toml"
-
-exclude:
-  - ".venv/**"
-  - "data/**"
-  - "notebooks/**"
-  - "outputs/**"
-  - "reports/**"
-  - "**/__pycache__/**"
-  - "**/*.pyc"
 
 python:
-  requirements_txt: "./requirements.txt"
-  lock_packages: false
-
+  requirements_txt: "requirements.bento.txt"
 
 docker:
   distro: debian
