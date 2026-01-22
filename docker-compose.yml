@@ -1,11 +1,12 @@
 services:
   audio-emotion-download:
-    image: audio-emotion:cpu
-    build:
+    image: audio-emotion:train
+    build: &build_train
       context: .
       dockerfile: dockerfiles/train.dockerfile
       args:
-        UV_GROUPS: "--group train --group cpu"
+        UV_GROUPS: "--group train"
+        UV_VERSION: "0.9.26"
     volumes:
       - ${HOME}/.kaggle/kaggle.json:/root/.kaggle/kaggle.json:ro
       - ./data:/app/data
@@ -14,12 +15,8 @@ services:
     command: uv run --frozen audio-emotion download --output-dir data/raw/audio-emotions
 
   audio-emotion-train-cpu:
-    image: audio-emotion:cpu
-    build:
-      context: .
-      dockerfile: dockerfiles/train.dockerfile
-      args:
-        UV_GROUPS: "--group train --group cpu"
+    image: audio-emotion:train
+    build: *build_train
     profiles: ["cpu"]
     shm_size: "8gb"
     environment:
@@ -33,12 +30,10 @@ services:
     command: uv run --frozen audio-emotion-train
 
   audio-emotion-train-gpu:
-    image: audio-emotion:cu117
-    build:
-      context: .
-      dockerfile: dockerfiles/train.dockerfile
-      args:
-        UV_GROUPS: "--group train --group cu117"
+    image: audio-emotion:train-gpu
+    # Force amd64 so torch+cu117 wheels resolve/install correctly
+    platform: linux/amd64
+    build: *build_train
     profiles: ["gpu"]
     shm_size: "8gb"
     gpus: all
@@ -53,12 +48,9 @@ services:
     command: uv run --frozen audio-emotion-train
 
   audio-emotion-train-profile-gpu:
-    image: audio-emotion:cu117
-    build:
-      context: .
-      dockerfile: dockerfiles/train.dockerfile
-      args:
-        UV_GROUPS: "--group train --group cu117"
+    image: audio-emotion:train-gpu
+    platform: linux/amd64
+    build: *build_train
     profiles: ["gpu", "profile"]
     shm_size: "8gb"
     gpus: all
@@ -71,5 +63,4 @@ services:
       - ./configs:/app/configs
       - ./outputs:/app/outputs
       - ./profiles:/app/profiles
-
-    command: uv run python -m cProfile -o /app/profiles/audio_emotion_train.prof -m audio_emotion.train
+    command: uv run --frozen python -m cProfile -o /app/profiles/audio_emotion_train.prof -m audio_emotion.train

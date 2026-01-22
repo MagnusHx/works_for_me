@@ -1,12 +1,13 @@
-FROM ghcr.io/astral-sh/uv:python3.12-alpine AS base
+FROM ghcr.io/astral-sh/uv:python3.11-bookworm-slim AS base
 
-COPY uv.lock uv.lock
-COPY pyproject.toml pyproject.toml
+WORKDIR /app
 
-RUN uv sync --frozen --no-install-project
+COPY pyproject.toml uv.lock README.md LICENSE ./
+
+RUN uv sync --frozen --no-install-project --extra api
 
 COPY src src/
 
-RUN uv sync --frozen
+RUN uv sync --frozen --extra api
 
-ENTRYPOINT ["uv", "run", "uvicorn", "src.audio_emotion.api:app", "--host", "0.0.0.0", "--port", "8000"]
+ENTRYPOINT ["uv", "run", "uvicorn", "audio_emotion.api:app", "--host", "0.0.0.0", "--port", "8000"]

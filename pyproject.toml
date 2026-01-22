@@ -16,6 +16,7 @@ dependencies = [
   "typer==0.15.1",
   "dvc-gs>=3.0.2",
   "pre-commit>=4.5.1",
+  "wandb>=0.24.0",
 ]
 
 [project.optional-dependencies]
@@ -36,15 +37,31 @@ train = [
   "librosa>=0.11.0",
   "soundfile>=0.13.1",
   "matplotlib>=3.10.8",
+
+  # macOS (CPU)
   "torch==2.0.1; sys_platform == 'darwin'",
   "torchaudio==2.0.2; sys_platform == 'darwin'",
-  "torch==2.0.1+cu117; sys_platform == 'linux' or sys_platform == 'win32'",
-  "torchaudio==2.0.2+cu117; sys_platform == 'linux' or sys_platform == 'win32'",
+
+  # Linux x86_64 (CUDA cu117 wheels exist here)
+  "torch==2.0.1+cu117; sys_platform == 'linux' and platform_machine == 'x86_64'",
+  "torchaudio==2.0.2+cu117; sys_platform == 'linux' and platform_machine == 'x86_64'",
+
+  # Linux ARM64 (no cu117 wheels -> use CPU wheels from PyPI)
+  "torch==2.0.1; sys_platform == 'linux' and platform_machine == 'aarch64'",
+  "torchaudio==2.0.2; sys_platform == 'linux' and platform_machine == 'aarch64'",
+
+  # Windows (CUDA cu117 wheels exist for amd64)
+  "torch==2.0.1+cu117; sys_platform == 'win32' and (platform_machine == 'AMD64' or platform_machine == 'x86_64')",
+  "torchaudio==2.0.2+cu117; sys_platform == 'win32' and (platform_machine == 'AMD64' or platform_machine == 'x86_64')",
 ]
 
 [tool.uv.sources]
-torch = [{ index = "pytorch-cu117", marker = "sys_platform == 'linux' or sys_platform == 'win32'" }]
-torchaudio = [{ index = "pytorch-cu117", marker = "sys_platform == 'linux' or sys_platform == 'win32'" }]
+torch = [
+  { index = "pytorch-cu117", marker = "(sys_platform == 'linux' and platform_machine == 'x86_64') or (sys_platform == 'win32' and (platform_machine == 'AMD64' or platform_machine == 'x86_64'))" },
+]
+torchaudio = [
+  { index = "pytorch-cu117", marker = "(sys_platform == 'linux' and platform_machine == 'x86_64') or (sys_platform == 'win32' and (platform_machine == 'AMD64' or platform_machine == 'x86_64'))" },
+]
 
 [[tool.uv.index]]
 name = "pytorch-cu117"
