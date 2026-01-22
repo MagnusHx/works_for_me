@@ -15,10 +15,9 @@ RUN uv python install 3.11
 
 WORKDIR /app
 
-# Example:
-#   --group train --group cpu
-#   --group train --group cu117
-ARG UV_GROUPS="--group train --group cpu"
+# The train group includes torch with platform markers that automatically
+# select CPU (macOS/Darwin) or CUDA (Linux/Windows) versions
+ARG UV_GROUPS="--group train"
 
 COPY pyproject.toml uv.lock README.md LICENSE ./
 

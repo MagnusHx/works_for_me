@@ -6,9 +6,9 @@ steps:
       - 'build'
       - '.'
       - '-t'
-      - 'europe-west1-docker.pkg.dev/proven-cosine-484310-s2/dtumlops/images:train-$SHORT_SHA'
+      - 'europe-west1-docker.pkg.dev/proven-cosine-484310-s2/dtumlops/train:$SHORT_SHA'
       - '-t'
-      - 'europe-west1-docker.pkg.dev/proven-cosine-484310-s2/dtumlops/images:train-latest'
+      - 'europe-west1-docker.pkg.dev/proven-cosine-484310-s2/dtumlops/train:latest'
       - '-f'
       - 'dockerfiles/train.dockerfile'
     timeout: '1800s'
@@ -20,21 +20,30 @@ steps:
       - 'build'
       - '.'
       - '-t'
-      - 'europe-west1-docker.pkg.dev/proven-cosine-484310-s2/dtumlops/images:api-$SHORT_SHA'
+      - 'europe-west1-docker.pkg.dev/proven-cosine-484310-s2/dtumlops/api:$SHORT_SHA'
       - '-t'
-      - 'europe-west1-docker.pkg.dev/proven-cosine-484310-s2/dtumlops/images:api-latest'
+      - 'europe-west1-docker.pkg.dev/proven-cosine-484310-s2/dtumlops/api:latest'
       - '-f'
       - 'dockerfiles/api.dockerfile'
     timeout: '1800s'
 
-  # Push both training and API images
+  # Push training image
   - name: 'gcr.io/cloud-builders/docker'
-    id: 'Push images'
+    id: 'Push training image'
     args:
       - 'push'
       - '--all-tags'
-      - 'europe-west1-docker.pkg.dev/proven-cosine-484310-s2/dtumlops/images'
-    waitFor: ['Build training image', 'Build API image']
+      - 'europe-west1-docker.pkg.dev/proven-cosine-484310-s2/dtumlops/train'
+    waitFor: ['Build training image']
+
+  # Push API image
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'Push API image'
+    args:
+      - 'push'
+      - '--all-tags'
+      - 'europe-west1-docker.pkg.dev/proven-cosine-484310-s2/dtumlops/api'
+    waitFor: ['Build API image']
 
 options:
   logging: CLOUD_LOGGING_ONLY

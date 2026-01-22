@@ -16,7 +16,11 @@ dependencies = [
   "typer==0.15.1",
   "dvc-gs>=3.0.2",
   "pre-commit>=4.5.1",
+<<<<<<< HEAD
   "bentoml>=1.4.33",
+=======
+  "wandb>=0.24.0",
+>>>>>>> 67ae43d (debugged version)
 ]
 
 [project.optional-dependencies]
