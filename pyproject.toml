@@ -19,6 +19,7 @@ dependencies = [
   "wandb>=0.24.0",
   "bentoml>=1.4.33",
   "ruff>=0.14.13",
+  "pytest>=9.0.2",
 ]
 
 [project.optional-dependencies]
