@@ -172,7 +172,7 @@ def main(
 	config_path: str = "configs",
 	config_name: str = "config.yaml",
 	show_class_distribution: bool = True,
-	show_confusion_matrix: bool = False,
+	show_confusion_matrix: bool = True,
 	confusion_max_samples: int = 2048,
 	confusion_batch_size: int = 32,
 ):
