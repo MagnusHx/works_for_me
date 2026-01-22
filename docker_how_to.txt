@@ -1,17 +1,23 @@
-# Download data (only needed once)
-docker compose run --rm audio-emotion-download
+# Training image: build & run This project uses uv with a frozen lockfile (uv.lock) to make Python deps reproducible. ## Update lockfile (only when you change pyproject.toml)
+bash
+uv lock
 
-# Build and train (platform markers automatically select CPU or CUDA torch)
-# On Linux, this will use torch+cu117. On macOS, it will use CPU torch.
+
+# Build the training image (CPU / default platform)
 docker build -f dockerfiles/train.dockerfile \
   --build-arg UV_GROUPS="--group train" \
   -t audio-emotion:train .
 
-# Run CPU training
-docker compose --profile cpu run --rm audio-emotion-train-cpu
+# Build as linux/amd64 (useful for CUDA wheels / deployment)
 
-# Run GPU training (Linux only - platform markers select CUDA torch)
-docker compose --profile gpu run --rm audio-emotion-train-gpu
+docker buildx build --platform linux/amd64 \
+  -f dockerfiles/train.dockerfile \
+  --build-arg UV_GROUPS="--group train" \
+  -t audio-emotion:train \
+  --load .
 
-# Profiling with GPU
-docker compose --profile gpu --profile profile run --rm audio-emotion-train-profile-gpu
+# Run Training
+docker run --rm audio-emotion:train
+
+# Run training with GPU
+docker run --rm --gpus all audio-emotion:train

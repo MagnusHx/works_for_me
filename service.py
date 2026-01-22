@@ -26,19 +26,69 @@ try:
 except Exception:  # pragma: no cover
     torch = None
 
+# Your repo's model + config loader
+try:
+    from omegaconf import OmegaConf  # type: ignore
+except Exception as e:  # pragma: no cover
+    raise RuntimeError(
+        "omegaconf is required for this service (your repo uses Hydra/OmegaConf)."
+    ) from e
+
+try:
+    from audio_emotion.model import Model  # type: ignore
+except Exception as e:  # pragma: no cover
+    raise RuntimeError(
+        "Could not import audio_emotion.model.Model. "
+        "Make sure you're running from the repo root and your package is installed (e.g. `uv sync`)."
+    ) from e
+
+
+def _strip_prefix(state_dict: Dict[str, Any], prefix: str) -> Dict[str, Any]:
+    """Strip a prefix from keys if present (e.g. 'module.' from DataParallel, '_orig_mod.' from torch.compile)."""
+    if any(k.startswith(prefix) for k in state_dict.keys()):
+        return {k[len(prefix) :]: v for k, v in state_dict.items()}
+    return state_dict
+
+
+def _torch_load_any(path: Path, device: str) -> Any:
+    """
+    Load torch artifacts robustly across torch versions.
+    - If the artifact is a state_dict, weights_only=True is safest.
+    - Some torch versions don't support weights_only -> fallback.
+    """
+    if torch is None:
+        raise RuntimeError("Torch is not installed but a torch model is required.")
+
+    # Prefer "weights_only=True" to avoid unpickling whole objects when possible.
+    try:
+        return torch.load(str(path), map_location=device, weights_only=True)
+    except TypeError:
+        return torch.load(str(path), map_location=device)
+
+
+def _to_device_str(device_env: str) -> str:
+    """
+    Normalize DEVICE env values.
+    Accepts: 'cpu', 'cuda', 'cuda:0', 'mps' (mac), etc.
+    """
+    d = (device_env or "cpu").strip()
+    if d == "":
+        return "cpu"
+    return d
+
 
 @bentoml.service(http={"port": int(os.environ.get("PORT", "3000"))})
 class Service:
     """
     Audio emotion inference service.
 
-    Endpoints (default routes):
-      - GET/POST /healthz
-      - POST /predict   (multipart file upload: audio=<file>)
-      - GET/POST /metadata
+    Endpoints:
+      - GET /healthz
+      - GET /metadata
+      - POST /predict   (multipart: -F audio=@file.wav)
     """
 
-    # Sensible defaults; override with env vars if you want
+    # Defaults (may be overridden by config.yaml or env vars)
     sample_rate: int = int(os.environ.get("SAMPLE_RATE", "16000"))
     max_seconds: float = float(os.environ.get("MAX_SECONDS", "4.0"))
     n_mels: int = int(os.environ.get("N_MELS", "64"))
@@ -46,6 +96,16 @@ class Service:
     hop_length: int = int(os.environ.get("HOP_LENGTH", "256"))
 
     def __init__(self) -> None:
+        self.device: str = _to_device_str(os.environ.get("DEVICE", "cpu"))
+
+        # Load cfg first so we can (optionally) pull preprocessing params from it
+        self.cfg = self._load_cfg()
+
+        # If config contains audio/feature params, use them unless env overrides were explicitly set.
+        # (This keeps your service aligned with training defaults.)
+        self._maybe_override_audio_params_from_cfg()
+
+        # Labels + model
         self.labels: List[str] = self._load_labels()
         self.backend, self.model = self._load_model()
 
@@ -60,6 +120,7 @@ class Service:
     def metadata(self) -> Dict[str, Any]:
         return {
             "labels": self.labels,
+            "device": self.device,
             "sample_rate": self.sample_rate,
             "max_seconds": self.max_seconds,
             "feature": {
@@ -69,6 +130,10 @@ class Service:
                 "hop_length": self.hop_length,
             },
             "backend": self.backend,
+            "model_path": str(Path(os.environ.get("MODEL_PATH", "models/model.pt"))),
+            "config_path": str(
+                Path(os.environ.get("CONFIG_PATH", "configs/config.yaml"))
+            ),
         }
 
     @bentoml.api
@@ -95,11 +160,9 @@ class Service:
 
         # Normalize + top-k
         scores = self._to_probabilities(scores)
-        top = sorted(
-            enumerate(scores),
-            key=lambda t: float(t[1]),
-            reverse=True,
-        )[: min(top_k, len(scores))]
+        top = sorted(enumerate(scores), key=lambda t: float(t[1]), reverse=True)[
+            : min(top_k, len(scores))
+        ]
 
         result: Dict[str, Any] = {
             "label": self.labels[top[0][0]] if self.labels and top else None,
@@ -121,8 +184,68 @@ class Service:
         return result
 
     # --------------------
-    # Model loading
+    # Config / Model loading
     # --------------------
+    def _load_cfg(self):
+        cfg_path = Path(os.environ.get("CONFIG_PATH", "configs/config.yaml"))
+        if not cfg_path.exists():
+            raise RuntimeError(
+                f"Config file not found at {cfg_path}. "
+                "Set CONFIG_PATH to the same config.yaml you trained with (needed to construct Model(cfg))."
+            )
+        return OmegaConf.load(str(cfg_path))
+
+    def _maybe_override_audio_params_from_cfg(self) -> None:
+        """
+        Best-effort: if your config has audio/preprocess fields, use them.
+        Env vars still win because they were already set at class level.
+        """
+
+        # Only override if env var wasn't explicitly set
+        def env_set(name: str) -> bool:
+            return name in os.environ and os.environ[name] != ""
+
+        # Try common config paths (you can add more if your config differs)
+        candidates = {
+            "sample_rate": [
+                "audio.sample_rate",
+                "preprocess.sample_rate",
+                "data.sample_rate",
+            ],
+            "max_seconds": [
+                "audio.max_seconds",
+                "preprocess.max_seconds",
+                "data.max_seconds",
+            ],
+            "n_mels": ["audio.n_mels", "preprocess.n_mels", "feature.n_mels"],
+            "n_fft": ["audio.n_fft", "preprocess.n_fft", "feature.n_fft"],
+            "hop_length": [
+                "audio.hop_length",
+                "preprocess.hop_length",
+                "feature.hop_length",
+            ],
+        }
+
+        for field_name, paths in candidates.items():
+            if env_set(field_name.upper()):
+                continue
+            for p in paths:
+                v = OmegaConf.select(self.cfg, p)
+                if v is not None:
+                    try:
+                        if field_name in {
+                            "sample_rate",
+                            "n_mels",
+                            "n_fft",
+                            "hop_length",
+                        }:
+                            setattr(self, field_name, int(v))
+                        else:
+                            setattr(self, field_name, float(v))
+                    except Exception:
+                        pass
+                    break
+
     def _load_labels(self) -> List[str]:
         """
         Tries common label files in ./models.
@@ -139,7 +262,6 @@ class Service:
             if p.exists():
                 if p.suffix == ".json":
                     data = json.loads(p.read_text(encoding="utf-8"))
-                    # allow {"labels":[...]} or {"0":"neutral",...} or ["neutral",...]
                     if (
                         isinstance(data, dict)
                         and "labels" in data
@@ -147,7 +269,6 @@ class Service:
                     ):
                         return [str(x) for x in data["labels"]]
                     if isinstance(data, dict):
-                        # sort by int key if possible
                         try:
                             items = sorted(
                                 ((int(k), v) for k, v in data.items()),
@@ -165,84 +286,90 @@ class Service:
                         if ln.strip()
                     ]
 
-        # fallback
         return ["neutral", "happy", "sad", "angry", "fear", "disgust", "surprise"]
 
     def _load_model(self) -> Tuple[str, Any]:
         """
         Loading order:
-          1) If BENTO_MODEL_TAG is set, try to load a BentoML-stored PyTorch model.
-          2) Otherwise, try common local filenames in ./models.
+          1) If BENTO_MODEL_TAG is set, load BentoML-stored PyTorch model (full module).
+          2) Otherwise, load local ./models/model.pt/.pth
+             - supports state_dict (your training saves model.state_dict())
+             - supports full nn.Module if you ever switch to torch.save(model, ...)
         """
         bento_tag = os.environ.get("BENTO_MODEL_TAG")
-        device = os.environ.get("DEVICE", "cpu")
+        device = self.device
 
-        # 1) BentoML model store (PyTorch)
+        # 1) BentoML model store (PyTorch full module)
         if bento_tag:
             if torch is None:
                 raise RuntimeError("BENTO_MODEL_TAG is set but torch is not installed.")
-            try:
-                model = bentoml.pytorch.load_model(bento_tag, device_id=device)
-                model.eval()
-                return "torch", model
-            except Exception as e:
-                raise RuntimeError(
-                    f"Failed to load BentoML PyTorch model '{bento_tag}'. "
-                    f"Unset BENTO_MODEL_TAG to load from ./models instead."
-                ) from e
+            model = bentoml.pytorch.load_model(bento_tag, device_id=device)
+            model.eval()
+            return "torch", model
 
-        # 2) Local files
-        models_dir = Path("models")
-        if not models_dir.exists():
+        # 2) Local model file (your repo saves state_dict)
+        model_path = Path(os.environ.get("MODEL_PATH", "models/model.pt"))
+        if not model_path.exists():
+            # try common alternates
+            for alt in ["models/vgg16_audio.pt", "models/model.pth"]:
+                if Path(alt).exists():
+                    model_path = Path(alt)
+                    break
+
+        if not model_path.exists():
             raise RuntimeError(
-                "No ./models directory found. Either add your model files under ./models "
-                "or set BENTO_MODEL_TAG to load from BentoML model store."
+                f"Model file not found. Looked for {model_path} (and common alternates). "
+                "Set MODEL_PATH to your weights file (e.g. models/vgg16_audio.pt)."
             )
 
-        # PyTorch: model.pt / model.pth
-        for name in [
-            "model.pt",
-            "model.pth",
-            "best.pt",
-            "best.pth",
-            "checkpoint.pt",
-            "checkpoint.pth",
-        ]:
-            p = models_dir / name
-            if p.exists():
-                if torch is None:
-                    raise RuntimeError(f"Found {p} but torch is not installed.")
-                obj = torch.load(p, map_location=device)
-                # support either a full nn.Module or a state_dict checkpoint
-                if isinstance(obj, torch.nn.Module):
-                    model = obj
-                elif isinstance(obj, dict) and "state_dict" in obj:
-                    raise RuntimeError(
-                        f"{p} looks like a Lightning/Checkpoint dict (has 'state_dict'). "
-                        "Update _load_model() to construct your model class and load the state_dict."
-                    )
-                else:
-                    raise RuntimeError(
-                        f"{p} isn't a torch.nn.Module. Update _load_model() to match your training artifact."
-                    )
-                model.eval()
-                return "torch", model
+        if torch is None:
+            raise RuntimeError(f"Found {model_path} but torch is not installed.")
 
-        # Sklearn: model.pkl
-        for name in ["model.pkl", "model.joblib", "clf.pkl", "classifier.pkl"]:
-            p = models_dir / name
-            if p.exists():
-                try:
-                    import joblib  # type: ignore
-                except Exception as e:
-                    raise RuntimeError(f"Found {p} but joblib is not installed.") from e
-                model = joblib.load(p)
-                return "sklearn", model
+        obj = _torch_load_any(model_path, device)
+
+        # Case A: someone saved full module
+        if isinstance(obj, torch.nn.Module):
+            obj.to(device)
+            obj.eval()
+            return "torch", obj
+
+        # Case B: state_dict or checkpoint dict
+        if isinstance(obj, dict):
+            # some people save {"state_dict": ...}
+            state_dict = obj.get("state_dict", obj)
+            if not isinstance(state_dict, dict):
+                raise RuntimeError(
+                    f"{model_path} loaded as dict, but didn't contain a usable state_dict. Keys: {list(obj.keys())[:50]}"
+                )
+
+            state_dict = _strip_prefix(state_dict, "module.")
+            state_dict = _strip_prefix(state_dict, "_orig_mod.")
+
+            model = Model(self.cfg).to(device)
+
+            strict_env = os.environ.get("STRICT_LOAD", "true").strip().lower()
+            strict = strict_env not in {"0", "false", "no", "off"}
+
+            try:
+                model.load_state_dict(state_dict, strict=strict)
+            except RuntimeError as e:
+                hint = (
+                    "\n\nYour weights don't match the constructed Model(cfg). Common causes:\n"
+                    "  - CONFIG_PATH is not the same config used during training\n"
+                    "  - model architecture changed since training\n"
+                    "  - state_dict keys have unexpected prefixes\n\n"
+                    "Try:\n"
+                    "  - set CONFIG_PATH to the training config\n"
+                    "  - or set STRICT_LOAD=false to see if it loads with missing/unexpected keys\n"
+                )
+                raise RuntimeError(str(e) + hint) from e
+
+            model.eval()
+            return "torch", model
 
         raise RuntimeError(
-            "No supported model file found in ./models. "
-            "Add one of: model.pt/model.pth (torch) or model.pkl (sklearn), "
-            "or set BENTO_MODEL_TAG to load from BentoML model store."
+            f"Unsupported torch artifact type in {model_path}: {type(obj)}. "
+            "Expected a state_dict dict or a torch.nn.Module."
         )
 
     # --------------------
@@ -286,13 +413,12 @@ class Service:
     def _extract_features(self, audio_path: Path) -> np.ndarray:
         """
         Default: log-mel spectrogram [n_mels, time]
-        Adjust this to match your model’s expected input.
+        This should match what your training pipeline fed into Model(cfg).
         """
         y = self._read_audio(audio_path)
 
         if librosa is None:
             # Minimal fallback: raw waveform
-            # Many models won't work with this; install librosa or adapt to your pipeline.
             return y.astype(np.float32)
 
         mels = librosa.feature.melspectrogram(
@@ -313,17 +439,19 @@ class Service:
         if torch is None:
             raise RuntimeError("Torch backend selected but torch is not installed.")
 
-        # If you fell back to raw waveform, make it 2D-ish
+        # Shape input similar to training: (B, C, M, T) for spectrograms
         if features.ndim == 1:
             x = torch.from_numpy(features).float().unsqueeze(0)  # (1, T)
         else:
-            # common CNN audio shape: (B, C, M, T)
-            x = torch.from_numpy(features).float().unsqueeze(0).unsqueeze(0)
+            x = (
+                torch.from_numpy(features).float().unsqueeze(0).unsqueeze(0)
+            )  # (1, 1, M, T)
+
+        x = x.to(self.device)
 
         with torch.no_grad():
             out = self.model(x)
 
-        # Handle common patterns: tensor, (tensor,), {"logits": tensor}
         if isinstance(out, (tuple, list)):
             out = out[0]
         if isinstance(out, dict):
@@ -346,9 +474,7 @@ class Service:
         if hasattr(self.model, "decision_function"):
             scores = self.model.decision_function(x)
             return np.asarray(scores[0], dtype=np.float32)
-        # last resort
         pred = self.model.predict(x)
-        # convert single class id to one-hot-ish
         scores = np.zeros((len(self.labels),), dtype=np.float32)
         try:
             scores[int(pred[0])] = 1.0
@@ -357,15 +483,11 @@ class Service:
         return scores
 
     def _to_probabilities(self, scores: np.ndarray) -> np.ndarray:
-        scores = np.asarray(scores, dtype=np.float32)
-        if scores.ndim != 1:
-            scores = scores.reshape(-1)
+        scores = np.asarray(scores, dtype=np.float32).reshape(-1)
 
-        # if already looks like probs
         if np.all(scores >= 0) and np.isclose(scores.sum(), 1.0, atol=1e-3):
             return scores
 
-        # softmax
         m = float(scores.max()) if scores.size else 0.0
         ex = np.exp(scores - m)
         s = float(ex.sum()) if ex.size else 1.0
