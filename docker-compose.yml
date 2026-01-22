@@ -1,11 +1,12 @@
 services:
   audio-emotion-download:
     image: audio-emotion:train
-    build:
+    build: &build_train
       context: .
       dockerfile: dockerfiles/train.dockerfile
       args:
         UV_GROUPS: "--group train"
+        UV_VERSION: "0.9.26"
     volumes:
       - ${HOME}/.kaggle/kaggle.json:/root/.kaggle/kaggle.json:ro
       - ./data:/app/data
@@ -15,11 +16,7 @@ services:
 
   audio-emotion-train-cpu:
     image: audio-emotion:train
-    build:
-      context: .
-      dockerfile: dockerfiles/train.dockerfile
-      args:
-        UV_GROUPS: "--group train"
+    build: *build_train
     profiles: ["cpu"]
     shm_size: "8gb"
     environment:
@@ -34,11 +31,9 @@ services:
 
   audio-emotion-train-gpu:
     image: audio-emotion:train-gpu
-    build:
-      context: .
-      dockerfile: dockerfiles/train.dockerfile
-      args:
-        UV_GROUPS: "--group train"
+    # Force amd64 so torch+cu117 wheels resolve/install correctly
+    platform: linux/amd64
+    build: *build_train
     profiles: ["gpu"]
     shm_size: "8gb"
     gpus: all
@@ -54,11 +49,8 @@ services:
 
   audio-emotion-train-profile-gpu:
     image: audio-emotion:train-gpu
-    build:
-      context: .
-      dockerfile: dockerfiles/train.dockerfile
-      args:
-        UV_GROUPS: "--group train"
+    platform: linux/amd64
+    build: *build_train
     profiles: ["gpu", "profile"]
     shm_size: "8gb"
     gpus: all
@@ -71,5 +63,4 @@ services:
       - ./configs:/app/configs
       - ./outputs:/app/outputs
       - ./profiles:/app/profiles
-
-    command: uv run python -m cProfile -o /app/profiles/audio_emotion_train.prof -m audio_emotion.train
+    command: uv run --frozen python -m cProfile -o /app/profiles/audio_emotion_train.prof -m audio_emotion.train
