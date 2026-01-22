@@ -31,18 +31,18 @@ jobs:
         run: |
           uv sync
           uv sync --group train
-          uv run pip list
+          uv pip list
 
       - name: Install PyTorch (CPU)
-        shell: bash
         run: |
-          uv run python -m pip install --upgrade pip
-          uv run pip install torch==2.0.1 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cpu
+          uv pip install torch==2.0.1 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cpu
           uv run python -c "import torch; print('torch', torch.__version__)"
 
       - name: Install test tools
         run: |
-          uv run pip install pytest coverage
+          uv pip install pytest coverage
+          uv run pytest --version
+          uv run coverage --version
 
       - name: Run tests & coverage
         run: |
