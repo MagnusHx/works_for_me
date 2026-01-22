@@ -30,7 +30,7 @@ jobs:
       - name: Install dependencies
         run: |
           uv sync
-          uv sync --group train
+          uv sync --group train --extra-index-url https://download.pytorch.org/whl/cpu
           uv run pip list
           uv run pip install pytest
           
