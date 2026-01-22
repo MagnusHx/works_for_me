@@ -17,9 +17,10 @@ COPY pyproject.toml uv.lock README.md LICENSE ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project
 
+COPY configs configs/
 COPY src src/
 
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen
 
-CMD ["uv", "run", "src/audio_emotion/train.py"]
+CMD ["uv", "run", "python", "src/audio_emotion/train.py"]
