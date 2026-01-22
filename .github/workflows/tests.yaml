@@ -29,6 +29,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          uv sync
           uv sync --group train
           uv run pip list
           uv run pip install pytest
