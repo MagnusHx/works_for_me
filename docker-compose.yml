@@ -1,11 +1,11 @@
 services:
   audio-emotion-download:
-    image: audio-emotion:cpu
+    image: audio-emotion:train
     build:
       context: .
       dockerfile: dockerfiles/train.dockerfile
       args:
-        UV_GROUPS: "--group train --group cpu"
+        UV_GROUPS: "--group train"
     volumes:
       - ${HOME}/.kaggle/kaggle.json:/root/.kaggle/kaggle.json:ro
       - ./data:/app/data
@@ -14,12 +14,12 @@ services:
     command: uv run --frozen audio-emotion download --output-dir data/raw/audio-emotions
 
   audio-emotion-train-cpu:
-    image: audio-emotion:cpu
+    image: audio-emotion:train
     build:
       context: .
       dockerfile: dockerfiles/train.dockerfile
       args:
-        UV_GROUPS: "--group train --group cpu"
+        UV_GROUPS: "--group train"
     profiles: ["cpu"]
     shm_size: "8gb"
     environment:
@@ -33,12 +33,12 @@ services:
     command: uv run --frozen audio-emotion-train
 
   audio-emotion-train-gpu:
-    image: audio-emotion:cu117
+    image: audio-emotion:train-gpu
     build:
       context: .
       dockerfile: dockerfiles/train.dockerfile
       args:
-        UV_GROUPS: "--group train --group cu117"
+        UV_GROUPS: "--group train"
     profiles: ["gpu"]
     shm_size: "8gb"
     gpus: all
@@ -53,12 +53,12 @@ services:
     command: uv run --frozen audio-emotion-train
 
   audio-emotion-train-profile-gpu:
-    image: audio-emotion:cu117
+    image: audio-emotion:train-gpu
     build:
       context: .
       dockerfile: dockerfiles/train.dockerfile
       args:
-        UV_GROUPS: "--group train --group cu117"
+        UV_GROUPS: "--group train"
     profiles: ["gpu", "profile"]
     shm_size: "8gb"
     gpus: all

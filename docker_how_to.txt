@@ -1,23 +1,17 @@
 # Download data (only needed once)
 docker compose run --rm audio-emotion-download
 
-#Build and train CPU
+# Build and train (platform markers automatically select CPU or CUDA torch)
+# On Linux, this will use torch+cu117. On macOS, it will use CPU torch.
 docker build -f dockerfiles/train.dockerfile \
-  --build-arg UV_GROUPS="--group train --group cpu" \
-  -t audio-emotion:cpu .
+  --build-arg UV_GROUPS="--group train" \
+  -t audio-emotion:train .
 
+# Run CPU training
 docker compose --profile cpu run --rm audio-emotion-train-cpu
 
-
-
-#Build and train GPU
-
-docker build -f dockerfiles/train.dockerfile \
-  --build-arg UV_GROUPS="--group train --group cu117" \
-  -t audio-emotion:cu117 .
-
+# Run GPU training (Linux only - platform markers select CUDA torch)
 docker compose --profile gpu run --rm audio-emotion-train-gpu
 
-
-#Profiling with GPU
+# Profiling with GPU
 docker compose --profile gpu --profile profile run --rm audio-emotion-train-profile-gpu

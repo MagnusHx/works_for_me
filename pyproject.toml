@@ -16,6 +16,7 @@ dependencies = [
   "typer==0.15.1",
   "dvc-gs>=3.0.2",
   "pre-commit>=4.5.1",
+  "wandb>=0.24.0",
 ]
 
 [project.optional-dependencies]
