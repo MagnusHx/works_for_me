@@ -1,8 +1,23 @@
-# Build once
-docker compose build
-
 # Download data (only needed once)
-docker compose run audio-emotion-download
+docker compose run --rm audio-emotion-download
 
-# Train model
-docker compose run audio-emotion-train
+#Build and train CPU
+docker build -f dockerfiles/train.dockerfile \
+  --build-arg UV_GROUPS="--group train --group cpu" \
+  -t audio-emotion:cpu .
+
+docker compose --profile cpu run --rm audio-emotion-train-cpu
+
+
+
+#Build and train GPU
+
+docker build -f dockerfiles/train.dockerfile \
+  --build-arg UV_GROUPS="--group train --group cu117" \
+  -t audio-emotion:cu117 .
+
+docker compose --profile gpu run --rm audio-emotion-train-gpu
+
+
+#Profiling with GPU
+docker compose --profile gpu --profile profile run --rm audio-emotion-train-profile-gpu
