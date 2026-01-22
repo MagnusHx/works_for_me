@@ -64,3 +64,32 @@ services:
       - ./outputs:/app/outputs
       - ./profiles:/app/profiles
     command: uv run --frozen python -m cProfile -o /app/profiles/audio_emotion_train.prof -m audio_emotion.train
+
+  audio-emotion-evaluate-cpu:
+    image: audio-emotion:train
+    build: *build_train
+    profiles: ["cpu", "eval"]
+    shm_size: "8gb"
+    environment:
+      KAGGLE_CONFIG_DIR: /root/.config/kaggle
+    volumes:
+      - ${HOME}/.kaggle/kaggle.json:/root/.config/kaggle/kaggle.json:ro
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./configs:/app/configs
+    command: uv run --frozen python src/audio_emotion/evaluate.py --model-path models/vgg16_audio.pt
+
+  audio-emotion-visualize-cpu:
+    image: audio-emotion:train
+    build: *build_train
+    profiles: ["cpu", "viz"]
+    shm_size: "8gb"
+    environment:
+      KAGGLE_CONFIG_DIR: /root/.config/kaggle
+    volumes:
+      - ${HOME}/.kaggle/kaggle.json:/root/.config/kaggle/kaggle.json:ro
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./configs:/app/configs
+      - ./reports:/app/reports
+    command: uv run --frozen python src/audio_emotion/visualize.py --model-path models/vgg16_audio.pt
