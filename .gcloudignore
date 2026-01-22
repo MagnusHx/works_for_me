@@ -1,0 +1,45 @@
+# Ignore files for gcloud builds submit
+# This prevents uploading unnecessary files to Cloud Build
+
+.gcloudignore
+.git
+.gitignore
+
+# Data files - CRITICAL: Do not upload large data
+data/raw/
+data/processed/
+data/*.dvc
+
+# Models
+models/
+*.pth
+*.pt
+*.onnx
+
+# Development folders
+notebooks/
+tests/
+branchtest/
+Boobys/
+christianmappe/
+manual_test/
+
+# Documentation
+reports/
+docs/
+
+# Python cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# IDE
+.vscode/
+.DS_Store
+
+# Logs and outputs
+*.log
+*.prof
+outputs/

@@ -1,0 +1,39 @@
+# Reduce Docker build context size
+
+# Data
+data/raw/
+data/processed/
+*.dvc
+
+# Git
+.git/
+.gitignore
+.gcloudignore
+
+# Models
+models/
+
+# Development
+notebooks/
+tests/
+branchtest/
+Boobys/
+christianmappe/
+
+# Docs
+reports/
+docs/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# IDE
+.vscode/
+.DS_Store
+
+# Logs
+*.log
+*.prof
+outputs/
