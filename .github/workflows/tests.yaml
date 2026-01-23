@@ -41,6 +41,7 @@ jobs:
       - name: Install test tools
         run: |
           uv pip install pytest coverage
+          uv pip install ruff
           uv run pytest --version
           uv run coverage --version
 
