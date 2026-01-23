@@ -46,11 +46,23 @@ jobs:
 
       - name: Kaggle
         run: |
-          mkdir -p "$HOME/.kaggle"
-          cat > "$HOME/.kaggle/kaggle.json" <<'JSON'
-          {"username":"ci-user","key":"ci-key"}
-          JSON
-          chmod 600 "$HOME/.kaggle/kaggle.json"
+          uv run python - <<'PY'
+          import json, os, pathlib, sys
+
+          kaggle_dir = pathlib.Path.home() / ".kaggle"
+          kaggle_dir.mkdir(parents=True, exist_ok=True)
+
+          kaggle_json = kaggle_dir / "kaggle.json"
+          kaggle_json.write_text(json.dumps({"username": "ci-user", "key": "ci-key"}))
+
+          try:
+            os.chmod(kaggle_json, 0o600)  # required on Linux/macOS
+          except Exception as e:
+            print(f"chmod skipped on this OS: {e}", file=sys.stderr)
+
+          print("Wrote:", kaggle_json)
+          PY
+
 
 
       - name: Run tests & coverage
