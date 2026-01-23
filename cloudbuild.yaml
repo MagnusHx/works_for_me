@@ -4,13 +4,15 @@ steps:
     id: 'Build training image'
     args:
       - 'build'
-      - '.'
+      - '-f'
+      - 'dockerfiles/train.dockerfile'
+      - '--build-arg'
+      - 'UV_GROUPS=--group train'
       - '-t'
       - 'europe-west1-docker.pkg.dev/proven-cosine-484310-s2/dtumlops/train:$SHORT_SHA'
       - '-t'
       - 'europe-west1-docker.pkg.dev/proven-cosine-484310-s2/dtumlops/train:latest'
-      - '-f'
-      - 'dockerfiles/train.dockerfile'
+      - '.'
     timeout: '1800s'
 
   # Build API image
@@ -18,33 +20,30 @@ steps:
     id: 'Build API image'
     args:
       - 'build'
-      - '.'
+      - '-f'
+      - 'dockerfiles/api.dockerfile'
+      - '--build-arg'
+      - 'UV_GROUPS=--group api'
+      # ^ change "api" to whatever your pyproject/uv group is called for the API
       - '-t'
       - 'europe-west1-docker.pkg.dev/proven-cosine-484310-s2/dtumlops/api:$SHORT_SHA'
       - '-t'
       - 'europe-west1-docker.pkg.dev/proven-cosine-484310-s2/dtumlops/api:latest'
-      - '-f'
-      - 'dockerfiles/api.dockerfile'
+      - '.'
     timeout: '1800s'
 
   # Push training image
   - name: 'gcr.io/cloud-builders/docker'
     id: 'Push training image'
-    args:
-      - 'push'
-      - '--all-tags'
-      - 'europe-west1-docker.pkg.dev/proven-cosine-484310-s2/dtumlops/train'
+    args: ['push', '--all-tags', 'europe-west1-docker.pkg.dev/proven-cosine-484310-s2/dtumlops/train']
     waitFor: ['Build training image']
 
   # Push API image
   - name: 'gcr.io/cloud-builders/docker'
     id: 'Push API image'
-    args:
-      - 'push'
-      - '--all-tags'
-      - 'europe-west1-docker.pkg.dev/proven-cosine-484310-s2/dtumlops/api'
+    args: ['push', '--all-tags', 'europe-west1-docker.pkg.dev/proven-cosine-484310-s2/dtumlops/api']
     waitFor: ['Build API image']
 
 options:
   logging: CLOUD_LOGGING_ONLY
-  machineType: 'E2_HIGHCPU_8'  # Faster builds
+  machineType: 'E2_HIGHCPU_8'
