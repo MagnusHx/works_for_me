@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from audio_emotion import download as download_module
 
 

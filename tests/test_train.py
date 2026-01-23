@@ -1,11 +1,9 @@
 import torch
-from omegaconf import OmegaConf
 
 from audio_emotion import train as train_mod
 
 
 def test_train_make_block_shapes():
-	cfg = OmegaConf.load("configs/config.yaml")
 	block = train_mod.Model._make_block(
 		in_channels=1,
 		out_channels=2,
