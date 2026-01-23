@@ -208,10 +208,6 @@ dependencies = [
     { name = "loguru" },
     { name = "numpy" },
     { name = "pre-commit" },
-    { name = "torch", version = "2.0.1", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or sys_platform == 'darwin'" },
-    { name = "torch", version = "2.0.1+cu117", source = { registry = "https://download.pytorch.org/whl/cu117" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine == 'AMD64' and sys_platform == 'win32') or (platform_machine == 'x86_64' and sys_platform == 'win32')" },
-    { name = "torchaudio", version = "2.0.2", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or sys_platform == 'darwin'" },
-    { name = "torchaudio", version = "2.0.2+cu117", source = { registry = "https://download.pytorch.org/whl/cu117" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine == 'AMD64' and sys_platform == 'win32') or (platform_machine == 'x86_64' and sys_platform == 'win32')" },
     { name = "typer" },
     { name = "wandb" },
 ]
@@ -228,16 +224,18 @@ dev = [
 ]
 
 [package.dev-dependencies]
-dev = [
-    { name = "coverage" },
-    { name = "pytest" },
-]
 train = [
+    { name = "coverage" },
     { name = "kaggle" },
     { name = "kagglehub" },
     { name = "librosa" },
     { name = "matplotlib" },
+    { name = "pytest" },
     { name = "soundfile" },
+    { name = "torch", version = "2.0.1", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or sys_platform == 'darwin'" },
+    { name = "torch", version = "2.0.1+cu117", source = { registry = "https://download.pytorch.org/whl/cu117" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine == 'AMD64' and sys_platform == 'win32') or (platform_machine == 'x86_64' and sys_platform == 'win32')" },
+    { name = "torchaudio", version = "2.0.2", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or sys_platform == 'darwin'" },
+    { name = "torchaudio", version = "2.0.2+cu117", source = { registry = "https://download.pytorch.org/whl/cu117" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine == 'AMD64' and sys_platform == 'win32') or (platform_machine == 'x86_64' and sys_platform == 'win32')" },
 ]
 
 [package.metadata]
@@ -252,6 +250,21 @@ requires-dist = [
     { name = "numpy", specifier = "<2" },
     { name = "pre-commit", specifier = ">=4.5.1" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.4.0" },
+    { name = "typer", specifier = "==0.15.1" },
+    { name = "uvicorn", marker = "extra == 'api'", specifier = "==0.34.0" },
+    { name = "wandb", specifier = ">=0.24.0" },
+]
+provides-extras = ["api", "dev"]
+
+[package.metadata.requires-dev]
+train = [
+    { name = "coverage", specifier = ">=7.13.1" },
+    { name = "kaggle", specifier = ">=1.8.3" },
+    { name = "kagglehub", specifier = ">=0.4.0" },
+    { name = "librosa", specifier = ">=0.11.0" },
+    { name = "matplotlib", specifier = ">=3.10.8" },
+    { name = "pytest", specifier = ">=9.0.2" },
+    { name = "soundfile", specifier = ">=0.13.1" },
     { name = "torch", marker = "sys_platform == 'darwin'", specifier = "==2.0.1" },
     { name = "torch", marker = "platform_machine == 'aarch64' and sys_platform == 'linux'", specifier = "==2.0.1" },
     { name = "torch", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'", specifier = "==2.0.1+cu117", index = "https://download.pytorch.org/whl/cu117" },
@@ -260,23 +273,6 @@ requires-dist = [
     { name = "torchaudio", marker = "platform_machine == 'aarch64' and sys_platform == 'linux'", specifier = "==2.0.2" },
     { name = "torchaudio", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'", specifier = "==2.0.2+cu117", index = "https://download.pytorch.org/whl/cu117" },
     { name = "torchaudio", marker = "(platform_machine == 'AMD64' and sys_platform == 'win32') or (platform_machine == 'x86_64' and sys_platform == 'win32')", specifier = "==2.0.2+cu117", index = "https://download.pytorch.org/whl/cu117" },
-    { name = "typer", specifier = "==0.15.1" },
-    { name = "uvicorn", marker = "extra == 'api'", specifier = "==0.34.0" },
-    { name = "wandb", specifier = ">=0.24.0" },
-]
-provides-extras = ["api", "dev"]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "coverage", specifier = ">=7.13.1" },
-    { name = "pytest", specifier = ">=9.0.2" },
-]
-train = [
-    { name = "kaggle", specifier = ">=1.8.3" },
-    { name = "kagglehub", specifier = ">=0.4.0" },
-    { name = "librosa", specifier = ">=0.11.0" },
-    { name = "matplotlib", specifier = ">=3.10.8" },
-    { name = "soundfile", specifier = ">=0.13.1" },
 ]
 
 [[package]]

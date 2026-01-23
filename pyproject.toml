@@ -75,3 +75,15 @@ explicit = true
 [project.scripts]
 audio-emotion = "audio_emotion.cli:app"
 audio-emotion-train = "audio_emotion.train:app"
+
+[tool.coverage.run]
+branch = true
+source = ["src/audio_emotion"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+exclude_lines = [
+  "if __name__ == \"__main__\":",
+  "pragma: no cover",
+]
