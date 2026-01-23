@@ -2,11 +2,12 @@ service: "service:Service"
 
 include:
   - "service.py"
-  - "audio_emotion/**"
-  - "models/**"
+  - "src/**"
   - "configs/**"
+  - "models/**"
   - "pyproject.toml"
   - "uv.lock"
+
 
 
 python:
