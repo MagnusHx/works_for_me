@@ -220,7 +220,6 @@ api = [
 dev = [
     { name = "black" },
     { name = "mypy" },
-    { name = "ruff" },
 ]
 
 [package.dev-dependencies]
@@ -231,6 +230,7 @@ train = [
     { name = "librosa" },
     { name = "matplotlib" },
     { name = "pytest" },
+    { name = "ruff" },
     { name = "soundfile" },
     { name = "torch", version = "2.0.1", source = { registry = "https://pypi.org/simple" }, marker = "(platform_machine == 'aarch64' and sys_platform == 'linux') or sys_platform == 'darwin'" },
     { name = "torch", version = "2.0.1+cu117", source = { registry = "https://download.pytorch.org/whl/cu117" }, marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or (platform_machine == 'AMD64' and sys_platform == 'win32') or (platform_machine == 'x86_64' and sys_platform == 'win32')" },
@@ -249,7 +249,6 @@ requires-dist = [
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.9.0" },
     { name = "numpy", specifier = "<2" },
     { name = "pre-commit", specifier = ">=4.5.1" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.4.0" },
     { name = "typer", specifier = "==0.15.1" },
     { name = "uvicorn", marker = "extra == 'api'", specifier = "==0.34.0" },
     { name = "wandb", specifier = ">=0.24.0" },
@@ -264,6 +263,7 @@ train = [
     { name = "librosa", specifier = ">=0.11.0" },
     { name = "matplotlib", specifier = ">=3.10.8" },
     { name = "pytest", specifier = ">=9.0.2" },
+    { name = "ruff", specifier = ">=0.4.0" },
     { name = "soundfile", specifier = ">=0.13.1" },
     { name = "torch", marker = "sys_platform == 'darwin'", specifier = "==2.0.1" },
     { name = "torch", marker = "platform_machine == 'aarch64' and sys_platform == 'linux'", specifier = "==2.0.1" },
