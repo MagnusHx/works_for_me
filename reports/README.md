@@ -91,7 +91,7 @@ will check the repositories and the code to verify your answers.
 * [X] Get your model training in GCP using either the Engine or Vertex AI (M21)
 * [ ] Create a FastAPI application that can do inference using your model (M22)
 * [X] Deploy your model in GCP using either Functions or Run as the backend (M23)
-* [X] Write API tests for your application and setup continues integration for these (M24)
+* [ ] Write API tests for your application and setup continues integration for these (M24)
 * [ ] Load test your application (M24)
 * [X] Create a more specialized ML-deployment API using either ONNX or BentoML, or both (M25)
 * [ ] Create a frontend for your API (M26)
@@ -221,10 +221,10 @@ will check the repositories and the code to verify your answers.
 > Recommended answer length: 100-200 words.
 >
 > Example:
+> 
+> Answer:
 > *The total code coverage of code is 70%, which includes all our source code.*
 > *If our code had 100% coverage would not mean that there would not be any errors as running code does in source does not mean all repo is working*
->
-> Answer: 
 
 --- question 8 fill here ---
 
@@ -272,6 +272,15 @@ will check the repositories and the code to verify your answers.
 > *here: <weblink>*
 >
 > Answer:
+>
+> Our continuous integration is implemented with GitHub Actions. In our repository we currently have the following workflows 
+linting.yaml: runs our linting / style checks (code-quality gates) on pushes and pull requests.
+tests.yaml: runs our unit test suite on pushes and pull requests to ensure changes don’t break existing functionality.
+pre-commit-update.yaml: keeps our pre-commit hooks up to date (automation around maintaining consistent tooling versions).
+We also have dependabot.yaml, which configures Dependabot to automatically open PRs for dependency updates.
+Operating systems / Python versions: at the moment we do not run a test matrix across multiple operating systems or multiple Python versions—the CI runs on a single standard runner configuration.
+Caching: we do not use caching (e.g., no pip/venv cache). Each workflow run installs dependencies from scratch, keeping the setup straightforward and reproducible.
+
 
 --- question 11 fill here ---
 
@@ -353,7 +362,8 @@ will check the repositories and the code to verify your answers.
 > *Debugging method was dependent on group member. Some just used ... and others used ... . We did a single profiling*
 > *run of our main code at some point that showed ...*
 >
-> Answer: 
+> Answer:
+
 
 --- question 16 fill here ---
 
@@ -538,6 +548,8 @@ curl -X POST "$SERVICE_URL/predict_gcs" \
 > *implemented using ...*
 >
 > Answer:
+>
+> Unfortunately we could not implemet anything extra, because of the learning curve of the already given material.
 
 
 --- question 28 fill here ---
