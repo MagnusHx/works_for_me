@@ -41,9 +41,16 @@ jobs:
       - name: Install test tools
         run: |
           uv pip install pytest coverage
-          uv pip install ruff
           uv run pytest --version
           uv run coverage --version
+          uv run ruff --version
+
+      - name: Lint (Ruff)
+        run: |
+          # Fail on style/lint issues
+          uv run ruff check .
+          # Enforce formatting without changing files
+          uv run ruff format --check .
 
       - name: Run tests & coverage
         run: |
