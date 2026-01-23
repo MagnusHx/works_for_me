@@ -131,7 +131,7 @@ will check the repositories and the code to verify your answers.
 >
 >
 > Answer:
-> *s245735, s235638, s24, s24*
+> *s245735, s235638, s245021, s245829
 
 ### Question 3
 > **Did you end up using any open-source frameworks/packages not covered in the course during your project? If so**
@@ -141,7 +141,6 @@ will check the repositories and the code to verify your answers.
 >
 > Answer:
 > Yes, we used a few open-source frameworks beyond what was covered in the course. Librosa was essential for audio handling and feature extraction (loading audio files, resampling, and creating spectrogram-based representations). We also used PyTorch for building and training the neural network model, since it gave us flexibility for experimenting with architectures and running training efficiently. For deployment, we relied on BentoML to wrap the model into a clean API with minimal boilerplate and to containerize it for cloud deployment.
-
 
 ## Coding environment
 
@@ -161,8 +160,6 @@ will check the repositories and the code to verify your answers.
 >
 > Answer: We used the cookiecutter MLOPs template. This generated the pyproject.toml file. In this file we wrote all the dependencies, which serves like a single source truth for the runtime and development requirements. To get a complete copy of our environment, you should go to our github repository, copy the url, then in the terminal you can either clone or fork our repository. While we worked together on the project, we cloned the repo by using the git clone *url*.git and then u sync to get the packages needed to run our model. 
 
---- question 4 fill here ---
-
 ### Question 5
 
 > **We expect that you initialized your project using the cookiecutter template. Explain the overall structure of your**
@@ -177,8 +174,6 @@ will check the repositories and the code to verify your answers.
 >
 > Answer: We initialized our project by using the cookiecutter template, which layed the foundation for the structure of our repo. We did run into some issues, like the data/raw and data/preprocessed was not generated using the template. The template was mostly empty, or filled with another template. For example, the .py files in the src folder had a template for the code, so we used the template and filled in the rest of the code. I am not entirely sure on which exact files and folders were manually created by us, we simply used the cookiecutter template and started doing the project from there on out.  
 
---- question 5 fill here ---
-
 ### Question 6
 
 > **Did you implement any rules for code quality and format? What about typing and documentation? Additionally,**
@@ -191,8 +186,6 @@ will check the repositories and the code to verify your answers.
 > *concepts are important in larger projects because ... . For example, typing ...*
 >
 > Answer: We implemented some rules and tools to ensure code quality and consistency throughout our project. For linting and formatting, we used the Ruff tool, which detects potential issues and anomalies. Ruff was integrated into our workflow and pre-commit checks, ensuring that the code we commited met the standard we set before being merged into the main branch. We tried to maintan an understandable code by using clear function names and structure. We also had #notes to help understanding in some areas. These concepts matter in larger projects because it sets the foundation for how the project should be worked on. This eliminates potential issues, conflicts and confusion, which ensures project reliability among the team. Without any structure, things could fall apart quickly, and a lot of time would be wasted on debugging.  
-
---- question 6 fill here ---
 
 ## Version control
 
@@ -211,8 +204,6 @@ will check the repositories and the code to verify your answers.
 >
 > Answer: We have used tests, which can be found in the tests directory. We have 3 sets of tests, one for api, data and model. The test_data verifies that the AudioDataset class intializes correctly, that it imports from PyTorch's Dataset class, and that it loads the expected number of audio samples from the raw data folder. The test_model checks that the model is correctly initialized using the config.yaml file. These tests help catch errors early in our development process. We considered adding tests for the test_api, but as of now we have not finished it yet. 
 
---- question 7 fill here ---
-
 ### Question 8
 
 > **What is the total code coverage (in percentage) of your code? If your code had a code coverage of 100% (or close**
@@ -220,13 +211,7 @@ will check the repositories and the code to verify your answers.
 >
 > Recommended answer length: 100-200 words.
 >
-> Example:
-> 
-> Answer:
-> *The total code coverage of code is 70%, which includes all our source code.*
-> *If our code had 100% coverage would not mean that there would not be any errors as running code does in source does not mean all repo is working*
-
---- question 8 fill here ---
+> Answer: The total code coverage of code is 70%, which includes all of our source code (./src). The file with the lowest coverage is train.py at 45%, which is likely due to the full training loop not being run in the unit test (lines 163-394 are untested). Even if our coverage was higher than 70%, it would not necessarily mean that our code was perfect and without error, but just that more lines would be executed during tests.
 
 ### Question 9
 
@@ -241,8 +226,6 @@ will check the repositories and the code to verify your answers.
 >
 > Answer: Yes, our workflow did include the use of branches and pull requests. We all git cloned the git repo. Each member then created a feature branch. We would work individually on our branch, and then push our work to the remote git repo. In the git repo we would then merge the commits from our branch to main via the pull requests. We had tests that would run before the final merge to ensure code quality (ruff) - As mentioned before. In addition to this, we would always git pull on our local main, git switch to our branch and then git rebase main branch. Only after this we would git add, commit and push. We did this to ensure we had the latest version of main before making changes, so we would have less conflicts. 
 
---- question 9 fill here ---
-
 ### Question 10
 
 > **Did you use DVC for managing data in your project? If yes, then how did it improve your project to have version**
@@ -254,9 +237,7 @@ will check the repositories and the code to verify your answers.
 > *We did make use of DVC in the following way: ... . In the end it helped us in ... for controlling ... part of our*
 > *pipeline*
 >
-> Answer:
-
---- question 10 fill here ---
+> Answer: We did not make use of DVC in our final release of our project. This is due to our dataset not really changing, and therefore for our use case relatively unnessecary. Tracking data versions in Git was sufficient, before we uploaded the data to our gcloud bucket. 
 
 ### Question 11
 
@@ -281,9 +262,6 @@ We also have dependabot.yaml, which configures Dependabot to automatically open 
 Operating systems / Python versions: at the moment we do not run a test matrix across multiple operating systems or multiple Python versions—the CI runs on a single standard runner configuration.
 Caching: we do not use caching (e.g., no pip/venv cache). Each workflow run installs dependencies from scratch, keeping the setup straightforward and reproducible.
 
-
---- question 11 fill here ---
-
 ## Running code and tracking experiments
 
 > In the following section we are interested in learning more about the experimental setup for running your code and
@@ -301,8 +279,6 @@ Caching: we do not use caching (e.g., no pip/venv cache). Each workflow run inst
 >
 > Answer: We configured our experiements using a config.yaml file, which contains all of our hyperparameters and settings, such as the model architecture, learning rate, no. of epochs etc. This means no values are hardcoded in the code itself. Instead, the config.yaml values are accessed through the cfg, for example stride = int(cfg.model.stride). This makes the setup easy to run and repoducible. Since we used a secure shell in the cloud, we would run an experiement with the command: docker compose run audio-emotion-train. If changes were made to the config.yaml, we would have to push the changes and pull them down on the GCP SSH, and then run the experiment again. 
 
---- question 12 fill here ---
-
 ### Question 13
 
 > **Reproducibility of experiments are important. Related to the last question, how did you secure that no information**
@@ -315,8 +291,6 @@ Caching: we do not use caching (e.g., no pip/venv cache). Each workflow run inst
 > *one would have to do ...*
 >
 > Answer: Reproducibility was important for our project. We ensured this by using the config.yaml file that contains all our hyperparameters and settings. This means no important information is lost between experimental runs, since all settings are stored in a safe version controlled file. In addition, we fixed a random seed defined in the config.yaml file. This help ensure that randomness, such as data shuffling and model initialization behave consistently through runs. To reproduce an experiment, one would clone the repo, uv sync the dependencies and run the training script using the same config.yaml file. As long as the config, code version and env. is the same, the experiment can be reproduced without the loss of information.
-
---- question 13 fill here ---
 
 ### Question 14
 
@@ -331,9 +305,7 @@ Caching: we do not use caching (e.g., no pip/venv cache). Each workflow run inst
 > *As seen in the first image when have tracked ... and ... which both inform us about ... in our experiments.*
 > *As seen in the second image we are also tracking ... and ...*
 >
-> Answer: 
-
---- question 14 fill here ---
+> Answer: We unfortunately did not implement weights and biases in our final project, nor any other experiment tracking service. Whilst this could be quickly implemented locally, we had difficulty hooking up the service in parallel with gcloud. 
 
 ### Question 15
 
@@ -348,9 +320,6 @@ Caching: we do not use caching (e.g., no pip/venv cache). Each workflow run inst
 >
 > Answer: We used Docker to containerize our project in order to make experiments and training more reproducible and easier to run across different computers. Docker was used when running the project through GCP, where we built and executed containers directly from the SSH terminal. We would build images using the docker compose build command and we would train our model using the docker compose run audio-emotion-train command.
 
-
---- question 15 fill here ---
-
 ### Question 16
 
 > **When running into bugs while trying to run your experiments, how did you perform debugging? Additionally, did you**
@@ -362,10 +331,7 @@ Caching: we do not use caching (e.g., no pip/venv cache). Each workflow run inst
 > *Debugging method was dependent on group member. Some just used ... and others used ... . We did a single profiling*
 > *run of our main code at some point that showed ...*
 >
-> Answer:
-
-
---- question 16 fill here ---
+> Answer: All group members mainly tried to interpret the terminal error outputs to debug, but if this became too tedious - which it did - we mainly used copilot or other LLM tools to help us debug. We did however do test runs using cProfile when viewing our model training runtime, but this was before having setup gcloud compute engine. 
 
 ## Working in the cloud
 
@@ -382,8 +348,6 @@ Caching: we do not use caching (e.g., no pip/venv cache). Each workflow run inst
 >
 > Answer: In our project we used several services from GCP to support our training end experimentation. Initially we created a GCP project. Within this project we enabled Compute Engine which we used to create a virtual machine instance. These instances were used to run our code remotely, including model training. We requested access to a GPU through Compute Engine. We tried with 2 and 1 GPU's, but were only accepted with 1. We also created a Cloud Storage Bucket, which we will be using to store data and files outside the virtual machine. Last but not least we accessed the virtual mahcine using the secure shell, which allowed us to work in the GCP environment through the GCP terminal. 
 
---- question 17 fill here ---
-
 ### Question 18
 
 > **The backbone of GCP is the Compute engine. Explained how you made use of this service and what type of VMs**
@@ -397,8 +361,6 @@ Caching: we do not use caching (e.g., no pip/venv cache). Each workflow run inst
 >
 > Answer: We had to enable the compute engine in order to request access to a GPU and create and instance with the GPU. We used the instance with the following hardware: Machine type: n1-standard-8 (8 vCPUs, 30 GB Memory), GPU: 1 NVIDIA V100, Boot disk: 250GB. 
 
---- question 18 fill here ---
-
 ### Question 19
 
 > **Insert 1-2 images of your GCP bucket, such that we can see what data you have stored in it.**
@@ -406,8 +368,6 @@ Caching: we do not use caching (e.g., no pip/venv cache). Each workflow run inst
 >
 > Answer:
 ![alt text](image-1.png)
-
---- question 19 fill here ---
 
 ### Question 20
 
@@ -417,8 +377,6 @@ Caching: we do not use caching (e.g., no pip/venv cache). Each workflow run inst
 > Answer: 
 ![alt text](image.png)
 
---- question 20 fill here ---
-
 ### Question 21
 
 > **Upload 1-2 images of your GCP cloud build history, so we can see the history of the images that have been build in**
@@ -427,8 +385,6 @@ Caching: we do not use caching (e.g., no pip/venv cache). Each workflow run inst
 > Answer: 
 
 ![alt text](image-2.png)
-
---- question 21 fill here ---
 
 ### Question 22
 
@@ -442,8 +398,6 @@ Caching: we do not use caching (e.g., no pip/venv cache). Each workflow run inst
 > *was because ...*
 >
 > Answer: Yes, we managed to train our model in the cloud using GCP Compute Engine, rahter than Vertex AI. We chose Copmute Engine because it gave us more control over the environment, and because it was easier to integrate with our docker based workflow. We created an instance with GPU support enabled and accessed it using the SSH. From here, we cloned the git repo in the SSH and built our docker images directly on the virtual machine. Training was run inside a docker container ensuring the same dependencies and configs were sued as in our local setup. 
-
---- question 22 fill here ---
 
 ## Deployment
 
@@ -460,8 +414,6 @@ Caching: we do not use caching (e.g., no pip/venv cache). Each workflow run inst
 >
 > Answer: 
 Yes, we managed to write an API for our model using BentoML. We created a service.py that defines a BentoML @service and exposed prediction endpoints with @bentoml.api. The main endpoint takes either an uploaded file or (more conveniently for our setup) a GCS path to a .npy file, downloads it, loads it with numpy, and feeds it through the PyTorch model. A key detail was that our training saved a state_dict, not a full torch.nn.Module, so in the service we reconstruct the model architecture (Model(cfg)) and load the weights before switching to eval() mode. We also added a /healthz endpoint for readiness checks and a /metadata endpoint to expose model/config information, which makes debugging and monitoring easier.
-
---- question 23 fill here ---
 
 ### Question 24
 
@@ -484,7 +436,6 @@ curl -X POST "$SERVICE_URL/predict_gcs" \
   -H "Content-Type: application/json" \
   -d '{"gcs_uri":"gs://audio_emotion_data_bucket/processed/Happy/03-01-03-01-01-01-01.npy","top_k":3}'
 ```
---- question 24 fill here ---
 
 ### Question 25
 
@@ -497,9 +448,7 @@ curl -X POST "$SERVICE_URL/predict_gcs" \
 > *For unit testing we used ... and for load testing we used ... . The results of the load testing showed that ...*
 > *before the service crashed.*
 >
-> Answer:
-
---- question 25 fill here ---
+> Answer: We did not perform unit testing and load testing of our API due to purely time contraints. We would have liked to implement this otherwise.
 
 ### Question 26
 
@@ -515,8 +464,6 @@ curl -X POST "$SERVICE_URL/predict_gcs" \
 > Answer:
 > We didn’t manage to implement monitoring for our deployed model. If we had it, it would help a lot with keeping the application working well over a longer time. For example, we could track basic things like how long each request takes, how often the system fails, and if the server gets overloaded. This would make it easier to notice problems early instead of only finding out when users complain.
 We could also monitor model-related things, like whether the inputs we get change over time (data drift) or if the model starts giving very different predictions than before. If that happens, it could mean the model performance is getting worse and we might need to retrain it or update the system. Overall, monitoring would help us understand what’s going on in production and make the application more stable and easier to maintain.
-
---- question 26 fill here ---
 
 ## Overall discussion of project
 
@@ -535,8 +482,6 @@ We could also monitor model-related things, like whether the inputs we get chang
 >
 > Answer: During the project we used a shared GCP setup. One of our group memebers shared access to his instance to the rest of the group. As of now, we have used approximately 500kr. (Jan 22) This was covered by the intitial free trial credits provided by Google Cloud. The most expensive service was the Compute Engine when we used the GPU VM instance for training. We also forgot to off the instance 2 nights in a row, so we don't know how much credit we lost to our forgetfulness. 
 
---- question 27 fill here ---
-
 ### Question 28
 
 > **Did you implement anything extra in your project that is not covered by other questions? Maybe you implemented**
@@ -553,9 +498,6 @@ We could also monitor model-related things, like whether the inputs we get chang
 >
 > Unfortunately we could not implemet anything extra, because of the learning curve of the already given material.
 
-
---- question 28 fill here ---
-
 ### Question 29
 
 > **Include a figure that describes the overall architecture of your system and what services that you make use of.**
@@ -569,9 +511,12 @@ We could also monitor model-related things, like whether the inputs we get chang
 > *The starting point of the diagram is our local setup, where we integrated ... and ... and ... into our code.*
 > *Whenever we commit code and push to GitHub, it auto triggers ... and ... . From there the diagram shows ...*
 >
-> Answer:
-
---- question 29 fill here ---
+> Answer: ![alt text](reports/figures/Architecture2.drawio.svg)
+> It starts on the left with Dev, which is our local environment where we write and test the code (model code + API code). When we are happy with a change, we push it to GitHub. From GitHub, a GitHub Actions workflow is triggered automatically. The idea is that Actions runs basic checks (like tests, linting, and build steps). If something breaks, the flow goes to the “If fail” box, meaning the pipeline stops and we should fix the problem before deploying anything.
+If the workflow succeeds, the next step is building a container for deployment. In the figure this is done using Google Cloud Build, which builds a Docker image of our application. That image is then stored in Artifact Registry, so it can be reused for deployment.
+On the “model side”, the system uses Compute Engine for heavier compute jobs (for example training or running scripts), and Data Storage (Google Cloud Storage) for storing datasets and saving the trained model files (“Save model to G…”).
+Finally, the trained model/service is deployed to Cloud Run, which exposes an API endpoint. Users send queries (API calls) to Cloud Run, and Cloud Run returns predictions.
+The big box at the top (“Monitoring and updating”) represents the loop where, ideally, logs/metrics would tell us when something is failing or getting slow, so we can update the code and redeploy through the same GitHub → build → deploy flow.
 
 ### Question 30
 
@@ -585,8 +530,6 @@ We could also monitor model-related things, like whether the inputs we get chang
 >
 > Answer: The overall project involved several challenges for us, most of which were related to the learning curve rather than the machine learning model itself. As third semester students in AI and Data, we have mainly been working with jupiter notebook, which is baby friendly. But this course required us to challenge ourselves into a more professional workflow, introducing terminal coding, GitHub collaboration, and Docker and GCP services. Learning how to work effectively with tools such as GitHub, Docker and GCP was both timeconsuming and challenging. A big amount of time was spent debugging issues and understanding the course material. We initially also struggled with understanding how all components fit together. To overcome these challenges, we worked hard together within the group, and tried our best to make sure everybody understood what was going on. No man left behind! We tried to break things into smaller parts to get a better understanding, and taking things one step at a time. 
 We did also struggle with a bit of outdated course material - Mainly, the cloud setup took some time because the screenshots provided in the modules were outdated according to how the current GCP website is. Although we had some challenges, it has been extremely rewarding for all of us. The skills and knowledge we have gathered will for sure help us tremedously in the future of our study and work afterwards. Our challenges have been great for learning, and we all really appreciate this course.
-
---- question 30 fill here ---
 
 ### Question 31
 
@@ -603,5 +546,3 @@ We did also struggle with a bit of outdated course material - Mainly, the cloud 
 > *All members contributed to code by...*
 > *We have used ChatGPT to help debug our code. Additionally, we used GitHub Copilot to help write some of our code.*
 > Answer: 
-
---- question 31 fill here ---
