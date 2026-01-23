@@ -58,7 +58,7 @@ will check the repositories and the code to verify your answers.
 * [X] Create a dedicated environment for you project to keep track of your packages (M2)
 * [X] Create the initial file structure using cookiecutter with an appropriate template (M6)
 * [X] Fill out the `data.py` file such that it downloads whatever data you need and preprocesses it (if necessary) (M6)
-* [ ] Add a model to `model.py` and a training procedure to `train.py` and get that running (M6)
+* [X] Add a model to `model.py` and a training procedure to `train.py` and get that running (M6)
 * [X] Remember to either fill out the `requirements.txt`/`requirements_dev.txt` files or keeping your
     `pyproject.toml`/`uv.lock` up-to-date with whatever dependencies that you are using (M2+M6)
 * [X] Remember to comply with good coding practices (`pep8`) while doing the project (M7)
@@ -131,7 +131,7 @@ will check the repositories and the code to verify your answers.
 >
 >
 > Answer:
-> *s245735, s24, s24, s24*
+> *s245735, s235638, s24, s24*
 
 ### Question 3
 > **Did you end up using any open-source frameworks/packages not covered in the course during your project? If so**
@@ -190,9 +190,7 @@ will check the repositories and the code to verify your answers.
 > *We used ... for linting and ... for formatting. We also used ... for typing and ... for documentation. These*
 > *concepts are important in larger projects because ... . For example, typing ...*
 >
-> Answer: We implemented some rules and tools to ensure code quality and consistency throughout our project. For linting and formatting, we used the Ruff tool, which detects potential issues and anomalies. Ruff was integrated into our workflow and pre-commit checks, ensuring that the code we commited met the standard we set before being merged into the main branch. 
-We tried to maintan an understandable code by using clear function names and structure. We also had #notes to help understanding in some areas. 
-These concepts matter in larger projects because it sets the foundation for how the project should be worked on. This eliminates potential issues, conflicts and confusion, which ensures project reliability among the team. Without any structure, things could fall apart quickly, and a lot of time would be wasted on debugging.  
+> Answer: We implemented some rules and tools to ensure code quality and consistency throughout our project. For linting and formatting, we used the Ruff tool, which detects potential issues and anomalies. Ruff was integrated into our workflow and pre-commit checks, ensuring that the code we commited met the standard we set before being merged into the main branch. We tried to maintan an understandable code by using clear function names and structure. We also had #notes to help understanding in some areas. These concepts matter in larger projects because it sets the foundation for how the project should be worked on. This eliminates potential issues, conflicts and confusion, which ensures project reliability among the team. Without any structure, things could fall apart quickly, and a lot of time would be wasted on debugging.  
 
 --- question 6 fill here ---
 
@@ -372,8 +370,7 @@ These concepts matter in larger projects because it sets the foundation for how 
 > Example:
 > *We used the following two services: Engine and Bucket. Engine is used for... and Bucket is used for...*
 >
-> Answer: In our project we used several services from GCP to support our training end experimentation. Initially we created a GCP project. Within this project we enabled Compute Engine which we used to create a virtual machine instance. These instances were used to run our code remotely, including model training. 
-We requested access to a GPU through Compute Engine. We tried with 2 and 1 GPU's, but were only accepted with 1. We also created a Cloud Storage Bucket, which we will be using to store data and files outside the virtual machine. Last but not least we accessed the virtual mahcine using the secure shell, which allowed us to work in the GCP environment through the GCP terminal. 
+> Answer: In our project we used several services from GCP to support our training end experimentation. Initially we created a GCP project. Within this project we enabled Compute Engine which we used to create a virtual machine instance. These instances were used to run our code remotely, including model training. We requested access to a GPU through Compute Engine. We tried with 2 and 1 GPU's, but were only accepted with 1. We also created a Cloud Storage Bucket, which we will be using to store data and files outside the virtual machine. Last but not least we accessed the virtual mahcine using the secure shell, which allowed us to work in the GCP environment through the GCP terminal. 
 
 --- question 17 fill here ---
 
@@ -388,8 +385,7 @@ We requested access to a GPU through Compute Engine. We tried with 2 and 1 GPU's
 > *We used the compute engine to run our ... . We used instances with the following hardware: ... and we started the*
 > *using a custom container: ...*
 >
-> Answer: We had to enable the compute engine in order to request access to a GPU and create and instance with the GPU. We used the instance with the following hardware: Machine type: n1-standard-8 (8 vCPUs, 30 GB Memory), GPU: 
-1 x NVIDIA V100, Boot disk: 250GB. 
+> Answer: We had to enable the compute engine in order to request access to a GPU and create and instance with the GPU. We used the instance with the following hardware: Machine type: n1-standard-8 (8 vCPUs, 30 GB Memory), GPU: 1 NVIDIA V100, Boot disk: 250GB. 
 
 --- question 18 fill here ---
 
@@ -431,8 +427,7 @@ We requested access to a GPU through Compute Engine. We tried with 2 and 1 GPU's
 > *We managed to train our model in the cloud using the Engine. We did this by ... . The reason we choose the Engine*
 > *was because ...*
 >
-> Answer: Yes, we managed to train our model in the cloud using GCP Compute Engine, rahter than Vertex AI. We chose Copmute Engine because it gave us more control over the environment, and because it was easier to integrate with our docker based workflow. 
-We created an instance with GPU support enabled and accessed it using the SSH. From here, we cloned the git repo in the SSH and built our docker images directly on the virtual machine. Training was run inside a docker container ensuring the same dependencies and configs were sued as in our local setup. 
+> Answer: Yes, we managed to train our model in the cloud using GCP Compute Engine, rahter than Vertex AI. We chose Copmute Engine because it gave us more control over the environment, and because it was easier to integrate with our docker based workflow. We created an instance with GPU support enabled and accessed it using the SSH. From here, we cloned the git repo in the SSH and built our docker images directly on the virtual machine. Training was run inside a docker container ensuring the same dependencies and configs were sued as in our local setup. 
 
 --- question 22 fill here ---
 
@@ -514,8 +509,7 @@ We created an instance with GPU support enabled and accessed it using the SSH. F
 > *Group member 1 used ..., Group member 2 used ..., in total ... credits was spend during development. The service*
 > *costing the most was ... due to ... . Working in the cloud was ...*
 >
-> Answer: During the project we used a shared GCP setup. One of our group memebers shared access to his instance to the rest of the group. As of now, we have used approximately 500kr. (Jan 22) This was covered by the intitial free trial credits provided by Google Cloud. 
-The most expensive service was the Compute Engine when we used the GPU VM instance for training. We also forgot to off the instance 2 nights in a row, so we don't know how much credit we lost to our forgetfulness. 
+> Answer: During the project we used a shared GCP setup. One of our group memebers shared access to his instance to the rest of the group. As of now, we have used approximately 500kr. (Jan 22) This was covered by the intitial free trial credits provided by Google Cloud. The most expensive service was the Compute Engine when we used the GPU VM instance for training. We also forgot to off the instance 2 nights in a row, so we don't know how much credit we lost to our forgetfulness. 
 
 --- question 27 fill here ---
 
@@ -562,12 +556,8 @@ The most expensive service was the Compute Engine when we used the GPU VM instan
 > Example:
 > *The biggest challenges in the project was using ... tool to do ... . The reason for this was ...*
 >
-> Answer: The overall project involved several challenges for us, most of which were related to the learning curve rather than the machine learning model itself. As third semester students in AI and Data, we have mainly been working with jupiter notebook, which is baby friendly. But this course required us to challenge ourselves into a more professional workflow, introducing terminal coding, GitHub collaboration, and Docker and GCP services. Learning how to work effectively with tools such as GitHub, Docker and GCP was both timeconsuming and challenging. 
-A big amount of time was spent debugging issues and understanding the course material. We initially also struggled with understanding how all components fit together.
-To overcome these challenges, we worked hard together within the group, and tried our best to make sure everybody understood what was going on. No man left behind! We tried to break things into smaller parts to get a better understanding, and taking things one step at a time. 
-We did also struggle with a bit of outdated course material - Mainly, the cloud setup took some time because the screenshots provided in the modules were outdated according to how the current GCP website is.
-
-Although we had some challenges, it has been extremely rewarding for all of us. The skills and knowledge we have gathered will for sure help us tremedously in the future of our study and work afterwards. Our challenges have been great for learning, and we all really appreciate this course.
+> Answer: The overall project involved several challenges for us, most of which were related to the learning curve rather than the machine learning model itself. As third semester students in AI and Data, we have mainly been working with jupiter notebook, which is baby friendly. But this course required us to challenge ourselves into a more professional workflow, introducing terminal coding, GitHub collaboration, and Docker and GCP services. Learning how to work effectively with tools such as GitHub, Docker and GCP was both timeconsuming and challenging. A big amount of time was spent debugging issues and understanding the course material. We initially also struggled with understanding how all components fit together. To overcome these challenges, we worked hard together within the group, and tried our best to make sure everybody understood what was going on. No man left behind! We tried to break things into smaller parts to get a better understanding, and taking things one step at a time. 
+We did also struggle with a bit of outdated course material - Mainly, the cloud setup took some time because the screenshots provided in the modules were outdated according to how the current GCP website is. Although we had some challenges, it has been extremely rewarding for all of us. The skills and knowledge we have gathered will for sure help us tremedously in the future of our study and work afterwards. Our challenges have been great for learning, and we all really appreciate this course.
 
 --- question 30 fill here ---
 
