@@ -27,7 +27,6 @@ api = [
 ]
 dev = [
   "black>=24.0.0",
-  "ruff>=0.4.0",
   "mypy>=1.9.0",
 ]
 
@@ -41,6 +40,7 @@ train = [
   "matplotlib>=3.10.8",
   "coverage>=7.13.1",
   "pytest>=9.0.2",
+  "ruff>=0.4.0",
 
   # macOS (CPU)
   "torch==2.0.1; sys_platform == 'darwin'",
