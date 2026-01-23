@@ -24,11 +24,56 @@ class Model(nn.Module):
             raise ValueError(msg)
 
         self.features = nn.Sequential(
-            *self._make_block(in_channels, out_channels, 2, kernel_size, stride, padding, max_pool_kernel, max_pool_stride),
-            *self._make_block(channels[0], channels[1], 2, kernel_size, stride, padding, max_pool_kernel, max_pool_stride),
-            *self._make_block(channels[1], channels[2], 3, kernel_size, stride, padding, max_pool_kernel, max_pool_stride),
-            *self._make_block(channels[2], channels[3], 3, kernel_size, stride, padding, max_pool_kernel, max_pool_stride),
-            *self._make_block(channels[3], channels[4], 3, kernel_size, stride, padding, max_pool_kernel, max_pool_stride),
+            *self._make_block(
+                in_channels,
+                out_channels,
+                2,
+                kernel_size,
+                stride,
+                padding,
+                max_pool_kernel,
+                max_pool_stride,
+            ),
+            *self._make_block(
+                channels[0],
+                channels[1],
+                2,
+                kernel_size,
+                stride,
+                padding,
+                max_pool_kernel,
+                max_pool_stride,
+            ),
+            *self._make_block(
+                channels[1],
+                channels[2],
+                3,
+                kernel_size,
+                stride,
+                padding,
+                max_pool_kernel,
+                max_pool_stride,
+            ),
+            *self._make_block(
+                channels[2],
+                channels[3],
+                3,
+                kernel_size,
+                stride,
+                padding,
+                max_pool_kernel,
+                max_pool_stride,
+            ),
+            *self._make_block(
+                channels[3],
+                channels[4],
+                3,
+                kernel_size,
+                stride,
+                padding,
+                max_pool_kernel,
+                max_pool_stride,
+            ),
         )
 
         self.adapt = nn.AdaptiveAvgPool2d((1, 1))

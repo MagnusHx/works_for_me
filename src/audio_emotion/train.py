@@ -81,7 +81,9 @@ def train_one_epoch(
         x = x.to(device, non_blocking=True)
         if channels_last and x.ndim == 4:
             x = x.contiguous(memory_format=torch.channels_last)
-        y = y.long().to(device, non_blocking=True)  # already long from dataset; safe either way
+        y = y.long().to(
+            device, non_blocking=True
+        )  # already long from dataset; safe either way
 
         optimizer.zero_grad(set_to_none=True)
         context = autocast(**autocast_kwargs) if autocast_enabled else nullcontext()
@@ -183,11 +185,15 @@ def train(
         # Precompute all spectrograms (so training doesn't do slow preprocessing)
         # dataset.send_to_processed(processed_dir)
 
-        label_indices = [dataset.class2idx[path.parent.name] for path in dataset.audio_files]
+        label_indices = [
+            dataset.class2idx[path.parent.name] for path in dataset.audio_files
+        ]
         counts = Counter(label_indices)
         weights = torch.tensor([1.0 / counts[i] for i in range(len(dataset.classes))])
         class_weights = weights / weights.mean()
-        sample_weights = torch.tensor([class_weights[label] for label in label_indices], dtype=torch.float32)
+        sample_weights = torch.tensor(
+            [class_weights[label] for label in label_indices], dtype=torch.float32
+        )
 
         # ---------- Device ----------
         use_cuda = bool(cfg.environment.cuda) and torch.cuda.is_available()
@@ -195,9 +201,15 @@ def train(
         typer.echo(f"Using device: {device} | batch_size: {cfg.dataloader.batch_size}")
 
         if device.type == "cuda":
-            torch.backends.cudnn.benchmark = bool(getattr(cfg.training, "cudnn_benchmark", True))  # type: ignore[attr-defined]
-            precision_setting = str(getattr(cfg.training, "matmul_precision", "medium")).lower()
-            if precision_setting in {"medium", "high"} and hasattr(torch, "set_float32_matmul_precision"):
+            torch.backends.cudnn.benchmark = bool(
+                getattr(cfg.training, "cudnn_benchmark", True)
+            )  # type: ignore[attr-defined]
+            precision_setting = str(
+                getattr(cfg.training, "matmul_precision", "medium")
+            ).lower()
+            if precision_setting in {"medium", "high"} and hasattr(
+                torch, "set_float32_matmul_precision"
+            ):
                 torch.set_float32_matmul_precision(precision_setting)
 
         # ---------- Split (train/val) ----------
@@ -210,7 +222,9 @@ def train(
 
         # ---------- Random split ----------
         generator = torch.Generator().manual_seed(int(cfg.experiment.seed))
-        train_ds, val_ds, _ = random_split(dataset, [n_train, n_val, n_test], generator=generator)
+        train_ds, val_ds, _ = random_split(
+            dataset, [n_train, n_val, n_test], generator=generator
+        )
 
         # ----- C TEST ------
         typer.echo("C) Before creating loaders")
@@ -219,9 +233,13 @@ def train(
         dataloader_cfg = cfg.dataloader
         num_workers = int(getattr(dataloader_cfg, "num_workers", 0))
         prefetch_factor = int(getattr(dataloader_cfg, "prefetch_factor", 2))
-        persistent_workers = bool(getattr(dataloader_cfg, "persistent_workers", num_workers > 0))
+        persistent_workers = bool(
+            getattr(dataloader_cfg, "persistent_workers", num_workers > 0)
+        )
 
-        def build_loader(dataset, shuffle: bool, sampler: WeightedRandomSampler | None = None) -> DataLoader:
+        def build_loader(
+            dataset, shuffle: bool, sampler: WeightedRandomSampler | None = None
+        ) -> DataLoader:
             loader_kwargs: dict[str, Any] = {
                 "batch_size": int(dataloader_cfg.batch_size),
                 "num_workers": num_workers,
@@ -236,19 +254,27 @@ def train(
                 loader_kwargs["prefetch_factor"] = prefetch_factor
             return DataLoader(dataset, **loader_kwargs)
 
-        train_indices = train_ds.indices if hasattr(train_ds, "indices") else list(range(len(train_ds)))
+        train_indices = (
+            train_ds.indices
+            if hasattr(train_ds, "indices")
+            else list(range(len(train_ds)))
+        )
         train_sampler = WeightedRandomSampler(
             weights=sample_weights[train_indices].tolist(),  # type: ignore[index]
             num_samples=len(train_indices),
             replacement=True,
         )
 
-        train_loader = build_loader(train_ds, shuffle=bool(dataloader_cfg.shuffle), sampler=train_sampler)
+        train_loader = build_loader(
+            train_ds, shuffle=bool(dataloader_cfg.shuffle), sampler=train_sampler
+        )
         val_loader = build_loader(val_ds, shuffle=False)
         # ------ D TEST -------
         typer.echo("D) After creating loaders")
 
-        typer.echo(f"Train batches: {len(train_loader)} | Val batches: {len(val_loader)}")
+        typer.echo(
+            f"Train batches: {len(train_loader)} | Val batches: {len(val_loader)}"
+        )
 
         # ---------- Smoke test (forces first batch load) ----------
         if len(train_loader) == 0:
@@ -274,7 +300,9 @@ def train(
             # Convert model parameters to channels_last format
             model = model.to(memory_format=torch.channels_last)  # type: ignore[call-overload]
 
-        compile_model = bool(getattr(cfg.training, "compile", False)) and hasattr(torch, "compile")
+        compile_model = bool(getattr(cfg.training, "compile", False)) and hasattr(
+            torch, "compile"
+        )
         if compile_model:
             compile_mode = str(getattr(cfg.training, "compile_mode", "default"))
             model = torch.compile(model, mode=compile_mode)  # type: ignore[assignment]  # type: ignore[assignment]
@@ -290,7 +318,10 @@ def train(
         )
 
         training_cfg = cfg.training
-        use_amp = bool(getattr(training_cfg, "use_amp", device.type == "cuda")) and device.type == "cuda"
+        use_amp = (
+            bool(getattr(training_cfg, "use_amp", device.type == "cuda"))
+            and device.type == "cuda"
+        )
         amp_dtype_key = str(getattr(training_cfg, "amp_dtype", "float16")).lower()
         dtype_map = {
             "fp16": torch.float16,

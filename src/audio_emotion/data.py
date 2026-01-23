@@ -9,13 +9,20 @@ from audio_emotion.download import download_audio_emotions
 
 
 class AudioDataset(Dataset):
-    def __init__(self, cfg: DictConfig, data_dir: str | Path, processed_dir: str | Path = "data/processed") -> None:
+    def __init__(
+        self,
+        cfg: DictConfig,
+        data_dir: str | Path,
+        processed_dir: str | Path = "data/processed",
+    ) -> None:
         self.cfg = cfg
 
         self.data_path = download_audio_emotions(Path(data_dir))
         self.audio_files = sorted(self.data_path.rglob("*.wav"))
         if not self.audio_files:
-            raise RuntimeError(f"No .wav files found after download in {self.data_path}")
+            raise RuntimeError(
+                f"No .wav files found after download in {self.data_path}"
+            )
 
         # label -> int mapping (e.g. "happy" -> 0)
         self.classes = sorted({p.parent.name for p in self.audio_files})
@@ -109,7 +116,9 @@ class AudioDataset(Dataset):
 
         if not missing:
             if verbose:
-                print(f"All {len(self.audio_files)} files already processed in {output_folder}. Skipping.")
+                print(
+                    f"All {len(self.audio_files)} files already processed in {output_folder}. Skipping."
+                )
             return output_folder
 
         processed_count = 0
@@ -127,6 +136,8 @@ class AudioDataset(Dataset):
             processed_count += 1
 
         if verbose:
-            print(f"Processed {processed_count} files to {output_folder} (skipped {skipped_count} already-processed).")
+            print(
+                f"Processed {processed_count} files to {output_folder} (skipped {skipped_count} already-processed)."
+            )
 
         return output_folder

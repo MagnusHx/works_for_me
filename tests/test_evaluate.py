@@ -83,7 +83,9 @@ def test_evaluate_main_smoke(tmp_path, monkeypatch):
     dataset = FakeDataset(x, y)
 
     # Monkeypatch AudioDataset and Model
-    monkeypatch.setattr("audio_emotion.evaluate.AudioDataset", lambda *_a, **_k: dataset)
+    monkeypatch.setattr(
+        "audio_emotion.evaluate.AudioDataset", lambda *_a, **_k: dataset
+    )
 
     class DummyModel(nn.Module):
         def __init__(self):
@@ -97,7 +99,10 @@ def test_evaluate_main_smoke(tmp_path, monkeypatch):
     monkeypatch.setattr("audio_emotion.evaluate.Model", lambda _cfg: dummy_model)
 
     # Monkeypatch loader builder to use our dataset and cfg
-    monkeypatch.setattr("audio_emotion.evaluate.build_loader", lambda ds, _cfg: DataLoader(ds, batch_size=2))
+    monkeypatch.setattr(
+        "audio_emotion.evaluate.build_loader",
+        lambda ds, _cfg: DataLoader(ds, batch_size=2),
+    )
 
     # Save dummy model state
     model_path = tmp_path / "m.pt"

@@ -5,7 +5,9 @@ def test_cli_download_function(tmp_path, monkeypatch, capsys):
     """Call the download function directly to cover its logic."""
 
     called = {}
-    monkeypatch.setattr(cli, "download_audio_emotions", lambda out: called.setdefault("path", out))
+    monkeypatch.setattr(
+        cli, "download_audio_emotions", lambda out: called.setdefault("path", out)
+    )
 
     cli.download(output_dir=tmp_path)
 
