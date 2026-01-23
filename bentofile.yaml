@@ -5,6 +5,7 @@ include:
   - "src/**"
   - "configs/**"
   - "models/**"
+  - "requirements.bento.txt"
   - "pyproject.toml"
   - "uv.lock"
 

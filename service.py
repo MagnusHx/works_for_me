@@ -194,6 +194,52 @@ class Service:
             }
         return result
 
+    @bentoml.api(route="/predict_npy")
+    def predict_npy(
+        self,
+        features: Annotated[Path, ContentType("application/octet-stream")] = Field(
+            description="Upload a .npy feature file (same format as training data/processed)"
+        ),
+        top_k: int = Field(default=3, ge=1, le=50),
+        return_scores: bool = Field(default=True),
+    ) -> Dict[str, Any]:
+        arr = np.load(str(features), allow_pickle=False)
+
+        # If arr is saved with extra keys (npz), you can handle it here:
+        # if isinstance(arr, np.lib.npyio.NpzFile): arr = arr["arr_0"]
+
+        # Run inference
+        if self.backend == "torch":
+            scores = self._predict_torch(arr)
+        elif self.backend == "sklearn":
+            scores = self._predict_sklearn(arr)
+        else:
+            raise RuntimeError(f"Unsupported backend: {self.backend}")
+
+        scores = self._to_probabilities(scores)
+        top = sorted(enumerate(scores), key=lambda t: float(t[1]), reverse=True)[
+            : min(top_k, len(scores))
+        ]
+
+        result: Dict[str, Any] = {
+            "label": self.labels[top[0][0]] if self.labels and top else None,
+            "top_k": [
+                {
+                    "label": self.labels[i] if i < len(self.labels) else str(i),
+                    "score": float(s),
+                }
+                for i, s in top
+            ],
+        }
+
+        if return_scores:
+            result["scores"] = {
+                (self.labels[i] if i < len(self.labels) else str(i)): float(scores[i])
+                for i in range(len(scores))
+            }
+
+        return result
+
     # --------------------
     # Config / Model loading
     # --------------------
@@ -409,13 +455,29 @@ class Service:
         if torch is None:
             raise RuntimeError("Torch backend selected but torch is not installed.")
 
-        # (B, C, M, T) for spectrograms
-        if features.ndim == 1:
-            x = torch.from_numpy(features).float().unsqueeze(0)  # (1, T)
+        x = torch.from_numpy(np.asarray(features)).float()
+
+        # Make sure we end up with (B, C, H, W)
+        if x.ndim == 2:
+            # (H, W) -> (1, 1, H, W)
+            x = x.unsqueeze(0).unsqueeze(0)
+        elif x.ndim == 3:
+            # Could be (C, H, W) or (H, W, C)
+            if x.shape[0] in (1, 2, 3, 4):  # assume channels-first
+                x = x.unsqueeze(0)  # (1, C, H, W)
+            elif x.shape[-1] in (1, 2, 3, 4):  # channels-last
+                x = x.permute(2, 0, 1).unsqueeze(0)  # (1, C, H, W)
+            else:
+                # Fallback: treat as (C, H, W)
+                x = x.unsqueeze(0)
+        elif x.ndim == 4:
+            # Already (B, C, H, W) or maybe (B, H, W, C)
+            if x.shape[-1] in (1, 2, 3, 4) and x.shape[1] not in (1, 2, 3, 4):
+                x = x.permute(0, 3, 1, 2)  # (B, C, H, W)
         else:
-            x = (
-                torch.from_numpy(features).float().unsqueeze(0).unsqueeze(0)
-            )  # (1, 1, M, T)
+            raise RuntimeError(
+                f"Unsupported feature shape for conv2d: {tuple(x.shape)}"
+            )
 
         x = x.to(self.device)
 
