@@ -31,6 +31,7 @@ jobs:
         run: |
           uv sync
           uv sync --group train
+          uv sync --group dev
           uv pip list
 
       - name: Install PyTorch (CPU)
