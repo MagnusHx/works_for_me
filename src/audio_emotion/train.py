@@ -13,7 +13,9 @@ import matplotlib.pyplot as plt
 import torch
 import typer
 from omegaconf import DictConfig
-from torch import amp, nn
+from torch import nn
+from torch.amp.autocast_mode import autocast
+from torch.cuda.amp.grad_scaler import GradScaler
 from torch.utils.data import DataLoader, WeightedRandomSampler, random_split
 
 from audio_emotion.data import AudioDataset
@@ -60,7 +62,7 @@ def train_one_epoch(
     optimizer,
     device: torch.device,
     log_every: int = 1,
-    scaler: torch.cuda.amp.GradScaler | None = None,
+    scaler: GradScaler | None = None,
     autocast_kwargs: dict[str, Any] | None = None,
     channels_last: bool = False,
 ):
@@ -82,13 +84,13 @@ def train_one_epoch(
         y = y.long().to(device, non_blocking=True)  # already long from dataset; safe either way
 
         optimizer.zero_grad(set_to_none=True)
-        context = amp.autocast(**autocast_kwargs) if autocast_enabled else nullcontext()
+        context = autocast(**autocast_kwargs) if autocast_enabled else nullcontext()
         with context:
             logits = model(x)
             loss = criterion(logits, y)
 
         if scaler is not None and scaler.is_enabled():
-            scaler.scale(loss).backward()
+            scaler.scale(loss).backward()  # type: ignore[union-attr]
             scaler.step(optimizer)
             scaler.update()
         else:
@@ -136,7 +138,7 @@ def evaluate(
             x = x.contiguous(memory_format=torch.channels_last)
         y = y.long().to(device, non_blocking=True)
 
-        context = amp.autocast(**autocast_kwargs) if autocast_enabled else nullcontext()
+        context = autocast(**autocast_kwargs) if autocast_enabled else nullcontext()
         with context:
             logits = model(x)
             loss = criterion(logits, y)
@@ -193,7 +195,7 @@ def train(
         typer.echo(f"Using device: {device} | batch_size: {cfg.dataloader.batch_size}")
 
         if device.type == "cuda":
-            torch.backends.cudnn.benchmark = bool(getattr(cfg.training, "cudnn_benchmark", True))
+            torch.backends.cudnn.benchmark = bool(getattr(cfg.training, "cudnn_benchmark", True))  # type: ignore[attr-defined]
             precision_setting = str(getattr(cfg.training, "matmul_precision", "medium")).lower()
             if precision_setting in {"medium", "high"} and hasattr(torch, "set_float32_matmul_precision"):
                 torch.set_float32_matmul_precision(precision_setting)
@@ -236,7 +238,7 @@ def train(
 
         train_indices = train_ds.indices if hasattr(train_ds, "indices") else list(range(len(train_ds)))
         train_sampler = WeightedRandomSampler(
-            weights=sample_weights[train_indices],
+            weights=sample_weights[train_indices].tolist(),  # type: ignore[index]
             num_samples=len(train_indices),
             replacement=True,
         )
@@ -269,12 +271,13 @@ def train(
         model = Model(cfg).to(device)
         channels_last = bool(getattr(cfg.training, "channels_last", False))
         if channels_last:
-            model = model.to(memory_format=torch.channels_last)
+            # Convert model parameters to channels_last format
+            model = model.to(memory_format=torch.channels_last)  # type: ignore[call-overload]
 
         compile_model = bool(getattr(cfg.training, "compile", False)) and hasattr(torch, "compile")
         if compile_model:
             compile_mode = str(getattr(cfg.training, "compile_mode", "default"))
-            model = torch.compile(model, mode=compile_mode)
+            model = torch.compile(model, mode=compile_mode)  # type: ignore[assignment]  # type: ignore[assignment]
         typer.echo("Training initialized")
 
         # ---------- Loss + Optimizer ----------
@@ -302,7 +305,7 @@ def train(
         if autocast_enabled:
             autocast_kwargs["dtype"] = amp_dtype
 
-        scaler = torch.cuda.amp.GradScaler(enabled=autocast_enabled and amp_dtype == torch.float16)
+        scaler = GradScaler(enabled=autocast_enabled and amp_dtype == torch.float16)
         log_every = int(getattr(training_cfg, "log_every", 1))
 
         # ---------- Training loop ----------
@@ -319,7 +322,7 @@ def train(
         for epoch in range(1, epochs + 1):
             typer.echo(f"\n=== Epoch {epoch:02d}/{epochs} ===")
             train_loss, train_acc = train_one_epoch(
-                model,
+                model,  # type: ignore[arg-type]
                 train_loader,
                 criterion,
                 optimizer,
@@ -330,7 +333,7 @@ def train(
                 channels_last=channels_last,
             )
             val_loss, val_acc = evaluate(
-                model,
+                model,  # type: ignore[arg-type]
                 val_loader,
                 criterion,
                 device,
