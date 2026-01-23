@@ -77,7 +77,22 @@ def _to_device_str(device_env: str) -> str:
     return d
 
 
-@bentoml.service(http={"port": int(os.environ.get("PORT", "3000"))})
+# ---- Runtime image for build/containerize ----
+bento_image = (
+    bentoml.images.Image(
+        python_version="3.11",
+        distro="debian",
+        lock_python_packages=False,  # disables uv lock/compile behavior
+    )
+    .system_packages("ffmpeg", "libsndfile1")
+    .requirements_file("requirements.bento.txt")
+)
+
+
+@bentoml.service(
+    image=bento_image,
+    http={"port": int(os.environ.get("PORT", "3000"))},
+)
 class Service:
     """
     Audio emotion inference service.
