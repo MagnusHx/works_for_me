@@ -1,7 +1,11 @@
+bentoml==1.4.33
 torch
 numpy
 pydantic
-librosa
 soundfile
 omegaconf
 hydra-core
+
+librosa==0.10.2.post1
+numba==0.59.1
+llvmlite==0.42.0
