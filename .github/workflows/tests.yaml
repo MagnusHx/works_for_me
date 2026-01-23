@@ -44,18 +44,15 @@ jobs:
           uv run pytest --version
           uv run coverage --version
       - name: Kaggle
-        run: >
-          uv run python -c "import json, os, pathlib, sys;
-          kaggle_dir = pathlib.Path.home() / '.kaggle';
-          kaggle_dir.mkdir(parents=True, exist_ok=True);
-          p = kaggle_dir / 'kaggle.json';
-          p.write_text(json.dumps({'username':'ci-user','key':'ci-key'}));
-          import platform;
-          try:
-              os.chmod(p, 0o600)
-          except Exception as e:
-              print(f'chmod skipped: {e}', file=sys.stderr);
+        run: |
+          uv run python -c "import json, os, pathlib, sys; \
+          kaggle_dir = pathlib.Path.home() / '.kaggle'; \
+          kaggle_dir.mkdir(parents=True, exist_ok=True); \
+          p = kaggle_dir / 'kaggle.json'; \
+          p.write_text(json.dumps({'username':'ci-user','key':'ci-key'})); \
+          (lambda: (os.chmod(p, 0o600), None) if hasattr(os, 'chmod') else None)(); \
           print('Wrote:', p)"
+
 
       - name: Run tests & coverage
         run: |
