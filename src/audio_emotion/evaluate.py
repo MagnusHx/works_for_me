@@ -142,12 +142,19 @@ def main(
 	n_val = int(cfg.splits.val * n_total)
 	n_test = n_total - n_train - n_val
 
+	typer.echo(f"Dataset size: {n_total} | Split ratios: train={cfg.splits.train}, val={cfg.splits.val}, seed={cfg.experiment.seed}")
+	typer.echo(f"Split sizes -> train: {n_train}, val: {n_val}, test: {n_test}")
+
 	if n_test <= 0:
 		raise RuntimeError("Test split size must be positive. Adjust split ratios in the config.")
 
 	if split not in {"train", "val", "test"}:
 		raise ValueError("split must be one of: train, val, test")
 
+	# Create deterministic split - matches training exactly because:
+	# 1. AudioDataset sorts files, ensuring consistent order
+	# 2. Same seed and split ratios as train.py
+	# 3. Evaluation remains independent - no coupling to training artifacts
 	generator = torch.Generator().manual_seed(int(cfg.experiment.seed))
 	train_ds, val_ds, test_ds = random_split(dataset, [n_train, n_val, n_test], generator=generator)
 	selected_ds = {"train": train_ds, "val": val_ds, "test": test_ds}[split]
