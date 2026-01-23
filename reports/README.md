@@ -58,7 +58,7 @@ will check the repositories and the code to verify your answers.
 * [X] Create a dedicated environment for you project to keep track of your packages (M2)
 * [X] Create the initial file structure using cookiecutter with an appropriate template (M6)
 * [X] Fill out the `data.py` file such that it downloads whatever data you need and preprocesses it (if necessary) (M6)
-* [ ] Add a model to `model.py` and a training procedure to `train.py` and get that running (M6)
+* [X] Add a model to `model.py` and a training procedure to `train.py` and get that running (M6)
 * [X] Remember to either fill out the `requirements.txt`/`requirements_dev.txt` files or keeping your
     `pyproject.toml`/`uv.lock` up-to-date with whatever dependencies that you are using (M2+M6)
 * [X] Remember to comply with good coding practices (`pep8`) while doing the project (M7)
@@ -131,7 +131,7 @@ will check the repositories and the code to verify your answers.
 >
 >
 > Answer:
-> *s245735, s24, s24, s24*
+> *s245735, s235638, s24, s24*
 
 ### Question 3
 > **Did you end up using any open-source frameworks/packages not covered in the course during your project? If so**
