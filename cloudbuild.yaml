@@ -9,11 +9,13 @@ steps:
       - '--build-arg'
       - 'UV_GROUPS=--group train'
       - '-t'
-      - 'europe-west1-docker.pkg.dev/proven-cosine-484310-s2/dtumlops/train:$SHORT_SHA'
+      - '.../train:$SHORT_SHA'
       - '-t'
-      - 'europe-west1-docker.pkg.dev/proven-cosine-484310-s2/dtumlops/train:latest'
+      - '.../train:latest'
       - '.'
     timeout: '1800s'
+
+
 
   # Build API image
   - name: 'gcr.io/cloud-builders/docker'
