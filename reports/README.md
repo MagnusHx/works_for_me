@@ -367,7 +367,7 @@ Caching: we do not use caching (e.g., no pip/venv cache). Each workflow run inst
 > **You can take inspiration from [this figure](figures/bucket.png).**
 >
 > Answer:
-![alt text](image-1.png)
+![alt text](figures/image-1.png)
 
 ### Question 20
 
@@ -375,7 +375,7 @@ Caching: we do not use caching (e.g., no pip/venv cache). Each workflow run inst
 > **stored. You can take inspiration from [this figure](figures/registry.png).**
 >
 > Answer: 
-![alt text](image.png)
+![alt text](figures/image.png)
 
 ### Question 21
 
@@ -384,7 +384,7 @@ Caching: we do not use caching (e.g., no pip/venv cache). Each workflow run inst
 >
 > Answer: 
 
-![alt text](image-2.png)
+![alt text](figures/image-2.png)
 
 ### Question 22
 
