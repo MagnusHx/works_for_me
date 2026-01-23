@@ -110,7 +110,7 @@ will check the repositories and the code to verify your answers.
 
 ### Extra
 
-* [X] Write some documentation for your application (M32)
+* [ ] Write some documentation for your application (M32)
 * [ ] Publish the documentation to GitHub Pages (M32)
 * [X] Revisit your initial project description. Did the project turn out as you wanted?
 * [X] Create an architectural diagram over your MLOps pipeline
@@ -158,7 +158,7 @@ will check the repositories and the code to verify your answers.
 > *We used ... for managing our dependencies. The list of dependencies was auto-generated using ... . To get a*
 > *complete copy of our development environment, one would have to run the following commands*
 >
-> Answer: We used the cookiecutter MLOPs template. This generated the pyproject.toml file. In this file we wrote all the dependencies, which serves like a single source truth for the runtime and development requirements. To get a complete copy of our environment, you should go to our github repository, copy the url, then in the terminal you can either clone or fork our repository. While we worked together on the project, we cloned the repo by using the git clone *url*.git and then u sync to get the packages needed to run our model. 
+> Answer: We used the cookiecutter MLOPs template. This generated the pyproject.toml file. In this file we wrote all the dependencies, which serves like a single source truth for the runtime and development requirements. To get a complete copy of our environment, you should go to our github repository, copy the url, then in the terminal you can either clone or fork our repository. While we worked together on the project, we cloned the repo by using the git clone *url*.git and then uv sync to get the packages needed to run our model. 
 
 ### Question 5
 
@@ -202,7 +202,7 @@ will check the repositories and the code to verify your answers.
 > *In total we have implemented X tests. Primarily we are testing ... and ... as these the most critical parts of our*
 > *application but also ... .*
 >
-> Answer: We have used tests, which can be found in the tests directory. We have 3 sets of tests, one for api, data and model. The test_data verifies that the AudioDataset class intializes correctly, that it imports from PyTorch's Dataset class, and that it loads the expected number of audio samples from the raw data folder. The test_model checks that the model is correctly initialized using the config.yaml file. These tests help catch errors early in our development process. We considered adding tests for the test_api, but as of now we have not finished it yet. 
+> Answer: We have used tests, which can be found in the tests directory. We have 7 sets of tests. Some of them are doing the following; The test_data verifies that the AudioDataset class intializes correctly, that it imports from PyTorch's Dataset class, and that it loads the expected number of audio samples from the raw data folder. The test_model checks that the model is correctly initialized using the config.yaml file. These tests help catch errors early in our development process. We considered adding tests for the test_api, but as of now we have not finished it yet. 
 
 ### Question 8
 
@@ -259,7 +259,7 @@ linting.yaml: runs our linting / style checks (code-quality gates) on pushes and
 tests.yaml: runs our unit test suite on pushes and pull requests to ensure changes don’t break existing functionality.
 pre-commit-update.yaml: keeps our pre-commit hooks up to date (automation around maintaining consistent tooling versions).
 We also have dependabot.yaml, which configures Dependabot to automatically open PRs for dependency updates.
-Operating systems / Python versions: at the moment we do not run a test matrix across multiple operating systems or multiple Python versions—the CI runs on a single standard runner configuration.
+For operating systems at the moment we do run a test but not for multiple Python versions—the CI runs on a single standard runner configuration.
 Caching: we do not use caching (e.g., no pip/venv cache). Each workflow run installs dependencies from scratch, keeping the setup straightforward and reproducible.
 
 ## Running code and tracking experiments
@@ -347,6 +347,8 @@ Caching: we do not use caching (e.g., no pip/venv cache). Each workflow run inst
 > *We used the following two services: Engine and Bucket. Engine is used for... and Bucket is used for...*
 >
 > Answer: In our project we used several services from GCP to support our training end experimentation. Initially we created a GCP project. Within this project we enabled Compute Engine which we used to create a virtual machine instance. These instances were used to run our code remotely, including model training. We requested access to a GPU through Compute Engine. We tried with 2 and 1 GPU's, but were only accepted with 1. We also created a Cloud Storage Bucket, which we will be using to store data and files outside the virtual machine. Last but not least we accessed the virtual mahcine using the secure shell, which allowed us to work in the GCP environment through the GCP terminal. 
+
+We have also used gcloud run for deploying our ml model using bento, but we could not get google cloud build to work and continuesly update the model after github repo.
 
 ### Question 18
 
@@ -511,12 +513,12 @@ We could also monitor model-related things, like whether the inputs we get chang
 > *The starting point of the diagram is our local setup, where we integrated ... and ... and ... into our code.*
 > *Whenever we commit code and push to GitHub, it auto triggers ... and ... . From there the diagram shows ...*
 >
-> Answer: ![alt text](reports/figures/Architecture2.drawio.svg)
-> It starts on the left with Dev, which is our local environment where we write and test the code (model code + API code). When we are happy with a change, we push it to GitHub. From GitHub, a GitHub Actions workflow is triggered automatically. The idea is that Actions runs basic checks (like tests, linting, and build steps). If something breaks, the flow goes to the “If fail” box, meaning the pipeline stops and we should fix the problem before deploying anything.
-If the workflow succeeds, the next step is building a container for deployment. In the figure this is done using Google Cloud Build, which builds a Docker image of our application. That image is then stored in Artifact Registry, so it can be reused for deployment.
-On the “model side”, the system uses Compute Engine for heavier compute jobs (for example training or running scripts), and Data Storage (Google Cloud Storage) for storing datasets and saving the trained model files (“Save model to G…”).
-Finally, the trained model/service is deployed to Cloud Run, which exposes an API endpoint. Users send queries (API calls) to Cloud Run, and Cloud Run returns predictions.
-The big box at the top (“Monitoring and updating”) represents the loop where, ideally, logs/metrics would tell us when something is failing or getting slow, so we can update the code and redeploy through the same GitHub → build → deploy flow.
+> Answer: ![Architecture](figures/Architecture2.drawio.svg)
+
+> The figure shows our end-to-end MLOps pipeline from development to deployment. We start locally (“Dev”), where we write code using the cookiecutter project structure and manage dependencies through pyproject.toml (installed with uv sync). Our model training is controlled by a config.yaml, so hyperparameters and settings are not hard-coded.
+When we push changes to GitHub, GitHub Actions runs our CI workflows. These include unit tests and linting/format checks (Ruff + pre-commit). If the workflow fails, the pipeline stops (“If fail”) and we fix the issue before merging or deploying. When it succeeds, we can build container images. In our setup, Docker images are built (via Cloud Build) and stored in GCP Artifact Registry, so we have a reproducible image that can be reused for training or serving.
+For data and model artifacts, we use Google Cloud Storage (“Data Storage”). Our training runs on a Compute Engine VM with a GPU (NVIDIA V100). From the VM we pull the repository, run training inside Docker, and save the trained model weights back to GCS 
+For deployment, we wrap the trained PyTorch model with BentoML and deploy the service to Cloud Run (“Cloud Run API”). Users then send API calls to the Cloud Run endpoint (for example /predict_gcs), and the service loads the input (optionally from GCS) and returns predictions. The “Monitoring and updating” box represents the feedback loop where, ideally, logs/metrics would help us detect issues and push improvements through the same GitHub → CI → build → deploy pipeline.
 
 ### Question 30
 
@@ -546,3 +548,4 @@ We did also struggle with a bit of outdated course material - Mainly, the cloud 
 > *All members contributed to code by...*
 > *We have used ChatGPT to help debug our code. Additionally, we used GitHub Copilot to help write some of our code.*
 > Answer: 
+Everyone was involved in with the every part of the project we sat together to solve the encountered problems. But if we were to divide who did what S245735 was in charge of deploying the model to the cloud and make the apis work and also made the pre-commit. S245829 was in charge of unit testing of source code for the model architecture and also acquiring a gpu on gcloud. S235638 was in charge of developing the docker containers for training our ml model and also made the code for evaluating the model. S245021 was in charge of data proccessing and feature extraction as well as setting up the gcloud bucket. We all have used LLMs to create and debug our code for the project.
