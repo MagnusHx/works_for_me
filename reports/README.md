@@ -221,8 +221,8 @@ will check the repositories and the code to verify your answers.
 > Recommended answer length: 100-200 words.
 >
 > Example:
-> *The total code coverage of code is X%, which includes all our source code. We are far from 100% coverage of our **
-> *code and even if we were then...*
+> *The total code coverage of code is 70%, which includes all our source code.*
+> *If our code had 100% coverage would not mean that there would not be any errors as running code does in source does not mean all repo is working*
 >
 > Answer: 
 
