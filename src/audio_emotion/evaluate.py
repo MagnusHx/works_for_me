@@ -29,8 +29,9 @@ def evaluate_model(
 	show_progress: bool = True,
 	num_classes: int = 0,
 	class_names: list[str] | None = None,
-) -> tuple[float, float, dict[str, float]]:
-	"""Compute average loss and accuracy for a dataloader."""
+	compute_confusion_matrix: bool = False,
+) -> tuple[float, float, dict[str, float], torch.Tensor | None]:
+	"""Compute average loss, accuracy, and optionally confusion matrix for a dataloader."""
 
 	model.eval()
 	criterion = nn.CrossEntropyLoss()
@@ -44,6 +45,7 @@ def evaluate_model(
 		num_classes = len(class_names)
 	class_correct = torch.zeros(num_classes, dtype=torch.long)
 	class_total = torch.zeros(num_classes, dtype=torch.long)
+	confusion_matrix = torch.zeros((num_classes, num_classes), dtype=torch.long) if compute_confusion_matrix else None
 
 	if show_progress and total_batches > 0:
 		typer.echo(f"Evaluating {total_batches} batches...", nl=True)
@@ -68,6 +70,10 @@ def evaluate_model(
 				class_total[class_idx] += mask.sum().item()
 				class_correct[class_idx] += (preds[mask] == batch_y[mask]).sum().item()
 
+		if confusion_matrix is not None:
+			idx = (batch_y * num_classes + preds).cpu()
+			confusion_matrix += torch.bincount(idx, minlength=num_classes * num_classes).reshape(num_classes, num_classes)
+
 		if show_progress and total_batches > 0:
 			progress = min(batch_idx / total_batches, 1.0)
 			bar_width = 24
@@ -79,7 +85,7 @@ def evaluate_model(
 		typer.echo("", nl=True)
 
 	if total == 0:
-		return 0.0, 0.0, {}
+		return 0.0, 0.0, {}, None
 
 	per_class: dict[str, float] = {}
 	if num_classes > 0:
@@ -88,7 +94,7 @@ def evaluate_model(
 			denom = int(class_total[class_idx].item())
 			per_class[name] = float(class_correct[class_idx].item() / denom) if denom > 0 else 0.0
 
-	return total_loss / total, correct / total, per_class
+	return total_loss / total, correct / total, per_class, confusion_matrix
 
 
 def build_loader(dataset, cfg: DictConfig) -> DataLoader:
@@ -117,6 +123,8 @@ def main(
 	config_name: str = "config.yaml",
 	split: str = "test",
 	show_per_class: bool = False,
+	save_confusion_matrix: bool = True,
+	confusion_matrix_path: Path = Path("models/confusion_matrix.pt"),
 ):
 	"""Evaluate a trained model checkpoint on the held-out test split."""
 
@@ -170,7 +178,7 @@ def main(
 	if channels_last:
 		model = model.to(memory_format=torch.channels_last)
 
-	loss, acc, per_class = evaluate_model(
+	loss, acc, per_class, confusion_matrix = evaluate_model(
 		model,
 		loader,
 		device,
@@ -178,6 +186,7 @@ def main(
 		show_progress=True,
 		num_classes=len(dataset.classes),
 		class_names=list(dataset.classes),
+		compute_confusion_matrix=save_confusion_matrix,
 	)
 	typer.echo(
 		f"Evaluation complete | split: {split} | device: {device} | samples: {len(selected_ds)} | loss: {loss:.4f} | acc: {acc:.3f}"
@@ -185,6 +194,14 @@ def main(
 	if show_per_class and per_class:
 		for name, value in per_class.items():
 			typer.echo(f"class {name}: acc {value:.3f}")
+
+	if save_confusion_matrix and confusion_matrix is not None:
+		confusion_matrix_path.parent.mkdir(parents=True, exist_ok=True)
+		torch.save(
+			{"confusion_matrix": confusion_matrix, "class_names": list(dataset.classes)},
+			confusion_matrix_path,
+		)
+		typer.echo(f"Saved confusion matrix to {confusion_matrix_path}")
 
 
 if __name__ == "__main__":

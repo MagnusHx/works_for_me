@@ -173,6 +173,8 @@ def main(
 	config_name: str = "config.yaml",
 	show_class_distribution: bool = True,
 	show_confusion_matrix: bool = True,
+	confusion_matrix_path: Path = Path("models/confusion_matrix.pt"),
+	recompute_confusion: bool = False,
 	confusion_max_samples: int = 2048,
 	confusion_batch_size: int = 32,
 ):
@@ -226,15 +228,29 @@ def main(
 		typer.echo(f"Saved visualization to {saved_distribution}")
 
 	if show_confusion_matrix:
-		cm = _compute_confusion_matrix(
-			model,
-			dataset,
-			device,
-			channels_last,
-			confusion_max_samples,
-			seed,
-			confusion_batch_size,
-		)
+		# Try to load pre-computed confusion matrix from evaluation
+		cm = None
+		if not recompute_confusion and confusion_matrix_path.exists():
+			typer.echo(f"Loading pre-computed confusion matrix from {confusion_matrix_path}")
+			saved_data = torch.load(confusion_matrix_path, map_location="cpu")
+			cm = saved_data["confusion_matrix"]
+			saved_class_names = saved_data.get("class_names", list(dataset.classes))
+			if saved_class_names != list(dataset.classes):
+				typer.echo("Warning: Class names mismatch. Recomputing confusion matrix.")
+				cm = None
+
+		if cm is None:
+			typer.echo("Computing confusion matrix (run evaluate.py first to avoid this)")
+			cm = _compute_confusion_matrix(
+				model,
+				dataset,
+				device,
+				channels_last,
+				confusion_max_samples,
+				seed,
+				confusion_batch_size,
+			)
+
 		cm_path = output_dir / "confusion_matrix.png"
 		saved_cm = _plot_confusion_matrix(cm, list(dataset.classes), cm_path)
 		typer.echo(f"Saved visualization to {saved_cm}")

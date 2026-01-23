@@ -79,11 +79,44 @@ services:
       - ./configs:/app/configs
     command: uv run --frozen python src/audio_emotion/evaluate.py --model-path models/vgg16_audio.pt
 
+  audio-emotion-evaluate-gpu:
+    image: audio-emotion:train-gpu
+    platform: linux/amd64
+    build: *build_train
+    profiles: ["gpu", "eval"]
+    shm_size: "8gb"
+    gpus: all
+    environment:
+      KAGGLE_CONFIG_DIR: /root/.config/kaggle
+    volumes:
+      - ${HOME}/.kaggle/kaggle.json:/root/.config/kaggle/kaggle.json:ro
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./configs:/app/configs
+    command: uv run --frozen python src/audio_emotion/evaluate.py --model-path models/vgg16_audio.pt
+
   audio-emotion-visualize-cpu:
     image: audio-emotion:train
     build: *build_train
     profiles: ["cpu", "viz"]
     shm_size: "8gb"
+    environment:
+      KAGGLE_CONFIG_DIR: /root/.config/kaggle
+    volumes:
+      - ${HOME}/.kaggle/kaggle.json:/root/.config/kaggle/kaggle.json:ro
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./configs:/app/configs
+      - ./reports:/app/reports
+    command: uv run --frozen python src/audio_emotion/visualize.py --model-path models/vgg16_audio.pt
+
+  audio-emotion-visualize-gpu:
+    image: audio-emotion:train-gpu
+    platform: linux/amd64
+    build: *build_train
+    profiles: ["gpu", "viz"]
+    shm_size: "8gb"
+    gpus: all
     environment:
       KAGGLE_CONFIG_DIR: /root/.config/kaggle
     volumes:
