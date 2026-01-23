@@ -240,6 +240,57 @@ class Service:
 
         return result
 
+    @bentoml.api(route="/predict_gcs")
+    def predict_gcs(
+        self,
+        gcs_uri: str = Field(description="gs://bucket/path/to/file.npy"),
+        top_k: int = Field(default=3, ge=1, le=50),
+        return_scores: bool = Field(default=True),
+    ) -> Dict[str, Any]:
+        from google.cloud import storage
+
+        if not gcs_uri.startswith("gs://"):
+            raise RuntimeError("gcs_uri must start with gs://")
+
+        _, rest = gcs_uri.split("gs://", 1)
+        bucket_name, blob_name = rest.split("/", 1)
+
+        # download to /tmp
+        client = storage.Client()
+        blob = client.bucket(bucket_name).blob(blob_name)
+
+        local_path = Path("/tmp") / Path(blob_name).name
+        blob.download_to_filename(str(local_path))
+
+        arr = np.load(str(local_path), allow_pickle=False)
+
+        if self.backend == "torch":
+            scores = self._predict_torch(arr)
+        else:
+            scores = self._predict_sklearn(arr)
+
+        scores = self._to_probabilities(scores)
+        top = sorted(enumerate(scores), key=lambda t: float(t[1]), reverse=True)[
+            : min(top_k, len(scores))
+        ]
+
+        result: Dict[str, Any] = {
+            "label": self.labels[top[0][0]] if top else None,
+            "top_k": [
+                {
+                    "label": self.labels[i] if i < len(self.labels) else str(i),
+                    "score": float(s),
+                }
+                for i, s in top
+            ],
+        }
+        if return_scores:
+            result["scores"] = {
+                (self.labels[i] if i < len(self.labels) else str(i)): float(scores[i])
+                for i in range(len(scores))
+            }
+        return result
+
     # --------------------
     # Config / Model loading
     # --------------------
