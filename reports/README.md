@@ -395,6 +395,7 @@ will check the repositories and the code to verify your answers.
 > **You can take inspiration from [this figure](figures/bucket.png).**
 >
 > Answer:
+![alt text](image-1.png)
 
 --- question 19 fill here ---
 
@@ -404,6 +405,7 @@ will check the repositories and the code to verify your answers.
 > **stored. You can take inspiration from [this figure](figures/registry.png).**
 >
 > Answer: 
+![alt text](image.png)
 
 --- question 20 fill here ---
 
@@ -413,6 +415,8 @@ will check the repositories and the code to verify your answers.
 > **your project. You can take inspiration from [this figure](figures/build.png).**
 >
 > Answer: 
+
+![alt text](image-2.png)
 
 --- question 21 fill here ---
 
@@ -445,6 +449,7 @@ will check the repositories and the code to verify your answers.
 > *to the API to make it more ...*
 >
 > Answer: 
+Yes, we managed to write an API for our model using BentoML. We created a service.py that defines a BentoML @service and exposed prediction endpoints with @bentoml.api. The main endpoint takes either an uploaded file or (more conveniently for our setup) a GCS path to a .npy file, downloads it, loads it with numpy, and feeds it through the PyTorch model. A key detail was that our training saved a state_dict, not a full torch.nn.Module, so in the service we reconstruct the model architecture (Model(cfg)) and load the weights before switching to eval() mode. We also added a /healthz endpoint for readiness checks and a /metadata endpoint to expose model/config information, which makes debugging and monitoring easier.
 
 --- question 23 fill here ---
 
@@ -461,7 +466,14 @@ will check the repositories and the code to verify your answers.
 > *`curl -X POST -F "file=@file.json"<weburl>`*
 >
 > Answer: 
+Yes, we managed to write an API for our model using BentoML. We created a service.py that defines a BentoML @service and exposed prediction endpoints with @bentoml.api. The main endpoint takes either an uploaded file or (more conveniently for our setup) a GCS path to a .npy file, downloads it, loads it with numpy, and feeds it through the PyTorch model. A key detail was that our training saved a state_dict, not a full torch.nn.Module, so in the service we reconstruct the model architecture (Model(cfg)) and load the weights before switching to eval() mode. We also added a /healthz endpoint for readiness checks and a /metadata endpoint to expose model/config information, which makes debugging and monitoring easier.
 
+```
+curl -X POST "$SERVICE_URL/predict_gcs" \
+  -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
+  -H "Content-Type: application/json" \
+  -d '{"gcs_uri":"gs://audio_emotion_data_bucket/processed/Happy/03-01-03-01-01-01-01.npy","top_k":3}'
+```
 --- question 24 fill here ---
 
 ### Question 25
@@ -526,6 +538,7 @@ will check the repositories and the code to verify your answers.
 > *implemented using ...*
 >
 > Answer:
+
 
 --- question 28 fill here ---
 
