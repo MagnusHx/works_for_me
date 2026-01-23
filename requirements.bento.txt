@@ -5,6 +5,7 @@ pydantic
 soundfile
 omegaconf
 hydra-core
+google-cloud-storage
 
 librosa==0.10.2.post1
 numba==0.59.1

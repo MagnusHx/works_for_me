@@ -2,11 +2,13 @@ service: "service:Service"
 
 include:
   - "service.py"
-  - "audio_emotion/**"
-  - "models/**"
+  - "src/**"
   - "configs/**"
+  - "models/**"
+  - "requirements.bento.txt"
   - "pyproject.toml"
   - "uv.lock"
+
 
 
 python:
