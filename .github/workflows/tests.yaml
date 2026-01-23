@@ -30,8 +30,19 @@ jobs:
       - name: Install dependencies
         run: |
           uv sync
-          uv run pip list
+          uv sync --group train
+          uv pip list
 
+      - name: Install PyTorch (CPU)
+        run: |
+          uv pip install torch==2.0.1 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cpu
+          uv run python -c "import torch; print('torch', torch.__version__)"
+
+      - name: Install test tools
+        run: |
+          uv pip install pytest coverage
+          uv run pytest --version
+          uv run coverage --version
 
       - name: Run tests & coverage
         run: |
