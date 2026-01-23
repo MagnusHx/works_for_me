@@ -44,6 +44,15 @@ jobs:
           uv run pytest --version
           uv run coverage --version
 
+      - name: Kaggle
+        run: |
+          mkdir -p "$HOME/.kaggle"
+          cat > "$HOME/.kaggle/kaggle.json" <<'JSON'
+          {"username":"ci-user","key":"ci-key"}
+          JSON
+          chmod 600 "$HOME/.kaggle/kaggle.json"
+
+
       - name: Run tests & coverage
         run: |
           uv run coverage run -m pytest tests/
