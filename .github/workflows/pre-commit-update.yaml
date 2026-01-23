@@ -22,10 +22,11 @@ jobs:
         with:
           python-version: "3.11"
 
-      # Option A: install pre-commit into the uv environment and run it
+      - name: Create virtual environment
+        run: uv venv
+
       - name: Install pre-commit
-        run: |
-          uv pip install pre-commit
+        run: uv pip install pre-commit
 
       - name: Run pre-commit autoupdate
         run: |
