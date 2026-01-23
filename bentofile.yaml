@@ -1,0 +1,21 @@
+service: "service:Service"
+
+include:
+  - "service.py"
+  - "audio_emotion/**"
+  - "models/**"
+  - "configs/**"
+  - "pyproject.toml"
+  - "uv.lock"
+
+
+python:
+  requirements_txt: "requirements.bento.txt"
+  lock_packages: false
+
+docker:
+  distro: debian
+  python_version: "3.11"
+  system_packages:
+    - ffmpeg
+    - libsndfile1
