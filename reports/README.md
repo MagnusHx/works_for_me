@@ -513,6 +513,8 @@ curl -X POST "$SERVICE_URL/predict_gcs" \
 > *measure ... and ... that would inform us about this ... behaviour of our application.*
 >
 > Answer:
+> We didn’t manage to implement monitoring for our deployed model. If we had it, it would help a lot with keeping the application working well over a longer time. For example, we could track basic things like how long each request takes, how often the system fails, and if the server gets overloaded. This would make it easier to notice problems early instead of only finding out when users complain.
+We could also monitor model-related things, like whether the inputs we get change over time (data drift) or if the model starts giving very different predictions than before. If that happens, it could mean the model performance is getting worse and we might need to retrain it or update the system. Overall, monitoring would help us understand what’s going on in production and make the application more stable and easier to maintain.
 
 --- question 26 fill here ---
 
