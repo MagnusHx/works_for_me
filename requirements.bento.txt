@@ -8,5 +8,5 @@ hydra-core
 google-cloud-storage
 
 librosa==0.10.2.post1
-numba==0.59.1
+numba==0.63.1
 llvmlite==0.42.0
