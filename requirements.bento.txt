@@ -1,4 +1,4 @@
-bentoml==1.4.33
+bentoml==1.4.34
 torch
 numpy
 pydantic
